@@ -1,0 +1,50 @@
+name: Receipt parsed wrong
+description: A receipt scan produced wrong items, wrong prices, or nothing at all.
+labels: ["parser"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The raw OCR text is the whole ballgame — with it, this becomes a test case and a
+        one-line fix. Without it, it is guesswork.
+
+  - type: dropdown
+    id: store
+    attributes:
+      label: Store
+      options:
+        - H-Mart
+        - T&T
+        - Trader Joe's
+        - Whole Foods
+        - Other / unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: raw-text
+    attributes:
+      label: Raw OCR text
+      description: >
+        Copy the `rawText` value from the `purchases` row for this scan. Feel free to edit
+        out anything personal (card digits, store address) — the item lines are what matter.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should the item lines have been?
+      placeholder: |
+        Organic Spinach 5oz — 4.99 — qty 1
+        Pork Belly Slice — 12.45 — qty 0.86
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What did the review screen show instead?
+    validations:
+      required: true

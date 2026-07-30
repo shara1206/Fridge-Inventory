@@ -1,0 +1,121 @@
+<resources>
+    <string name="app_name">冰箱</string>
+
+    <string name="area_fridge">冷藏</string>
+    <string name="area_freezer">冷冻</string>
+    <string name="area_pantry">常温</string>
+
+    <string name="cat_vegetables">蔬菜</string>
+    <string name="cat_fruit">水果</string>
+    <string name="cat_meat">生鲜肉类</string>
+    <string name="cat_seafood">海鲜</string>
+    <string name="cat_tofu_soy">豆制品</string>
+    <string name="cat_dairy_eggs">乳品蛋类</string>
+    <string name="cat_frozen_staples">速冻主食</string>
+    <string name="cat_grains_noodles">米面粮油</string>
+    <string name="cat_seasoning">调味料</string>
+    <string name="cat_snacks">零食</string>
+    <string name="cat_beverage">饮料</string>
+    <string name="cat_prepared">熟食即食</string>
+    <string name="cat_other">其他</string>
+
+    <string name="reason_used">吃掉了</string>
+    <string name="reason_discarded">扔掉了</string>
+
+    <string name="filter_all">全部</string>
+    <string name="action_save">保存</string>
+    <string name="action_back">返回</string>
+    <string name="action_delete">删除</string>
+    <string name="action_settings">设置</string>
+    <string name="action_history">历史</string>
+    <string name="action_undo">撤销</string>
+    <string name="action_restore">放回去</string>
+    <string name="action_clear">清空</string>
+
+    <string name="title_inventory">冰箱</string>
+    <string name="inventory_search">搜索</string>
+    <string name="inventory_empty">还没有记录。扫张小票，或者手动加一条。</string>
+    <string name="inventory_add_manual">手动添加</string>
+    <string name="inventory_scan">扫小票</string>
+    <string name="inventory_mark_used">吃掉了</string>
+    <string name="inventory_mark_discarded">扔掉了</string>
+    <string name="inventory_summary_items">%1$d 件</string>
+    <string name="inventory_summary_expired">%1$d 已过期</string>
+    <string name="inventory_summary_due">%1$d 快到期</string>
+    <string name="inventory_finished">已移除 %1$s</string>
+    <string name="expiry_untracked">—</string>
+    <string name="expiry_over">过期 %1$d 天</string>
+    <string name="expiry_today">今天</string>
+    <string name="expiry_days">%1$d 天</string>
+
+    <string name="title_add_item">添加</string>
+    <string name="title_edit_item">编辑</string>
+    <string name="field_name">名称</string>
+    <string name="field_qty">数量</string>
+    <string name="field_unit">单位</string>
+    <string name="field_price">价格</string>
+    <string name="field_notes">备注</string>
+    <string name="action_guess">根据名称猜分类和保质期</string>
+    <string name="section_where">放在哪</string>
+    <string name="section_category">分类</string>
+    <string name="section_store">店铺</string>
+    <string name="section_dates">日期</string>
+    <string name="section_use_some">用掉一部分</string>
+    <string name="date_bought">购买 %1$s</string>
+    <string name="date_expires">到期 %1$s</string>
+    <string name="date_set_expiry">设置到期日</string>
+    <string name="date_shift">+%1$d 天</string>
+    <string name="use_amount">−%1$s</string>
+    <string name="error_qty">请输入大于 0 的数字</string>
+    <string name="error_price">请输入类似 4.99 的金额</string>
+    <string name="merged_into_existing">已合并到%1$s里原有的那份</string>
+
+    <string name="title_scan">扫小票</string>
+    <string name="scan_take_photo">拍照</string>
+    <string name="scan_pick_image">选图片</string>
+    <string name="scan_reading">正在识别小票…</string>
+    <string name="scan_hint">把小票铺平，光线均匀，让商品行占满画面。</string>
+    <string name="scan_no_lines">没找到商品行。换个更平、光线更好的角度再拍一次。</string>
+    <string name="scan_unreadable">这张图读不出来。</string>
+    <string name="scan_header">%1$s · %2$s · 选中 %3$d / %4$d</string>
+    <string name="scan_date_unknown">未识别到日期</string>
+    <string name="scan_no_price">无价格</string>
+    <string name="scan_select_all">全选</string>
+    <string name="scan_select_none">全不选</string>
+    <string name="scan_add_items">加入 %1$d 件</string>
+
+    <string name="title_settings">设置</string>
+    <string name="setting_reminders">过期提醒</string>
+    <string name="setting_reminders_desc">每天一条汇总，提醒你哪些东西快坏了。</string>
+    <string name="section_warn_me">提前</string>
+    <string name="section_at">时间</string>
+    <string name="lead_same_day">当天</string>
+    <string name="lead_days">%1$d 天</string>
+    <string name="hour_label">%1$02d:00</string>
+    <string name="privacy_note">应用没有联网权限。只有你打开提醒时才会申请通知权限，在那之前提醒一直是关闭的。</string>
+
+    <string name="title_history">历史</string>
+    <string name="history_empty">还没有东西离开厨房。</string>
+    <string name="waste_window">最近 30 天</string>
+    <string name="waste_eaten">吃掉 %1$d</string>
+    <string name="waste_thrown">扔掉 %1$d</string>
+    <string name="waste_percent">浪费 %1$d%%</string>
+    <string name="waste_percent_none">数据还不够</string>
+    <string name="waste_money">扔掉了 %1$s</string>
+    <string name="waste_by_category">最常扔掉的分类</string>
+    <string name="waste_by_store">按店铺</string>
+    <string name="waste_count_suffix">× %1$d</string>
+
+    <string name="notif_channel_name">过期提醒</string>
+    <string name="notif_channel_desc">每天汇总快要坏掉的食物。</string>
+    <string name="notif_title_expired">%1$d 件已过期</string>
+    <string name="notif_title_due">%1$d 件快到期</string>
+    <string name="notif_title_both">%1$d 件已过期，%2$d 件快到期</string>
+    <string name="notif_entry">%1$s（%2$s）</string>
+    <string name="notif_more">还有 %1$d 件</string>
+    <string name="notif_days_over">过期 %1$d 天</string>
+    <string name="notif_day_over">过期 1 天</string>
+    <string name="notif_today">今天</string>
+    <string name="notif_tomorrow">明天</string>
+    <string name="notif_in_days">%1$d 天后</string>
+</resources>

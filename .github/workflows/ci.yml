@@ -1,0 +1,96 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Cancel an in-flight run when the same branch is pushed again.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Unit tests and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Provisions Gradle 8.9 on PATH and handles the dependency cache, so this
+      # workflow runs whether or not gradle-wrapper.jar is committed yet.
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Make sure compileSdk 35 is installed
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ -x "$SDKMANAGER" ]; then
+            yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+            "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" > /dev/null || true
+          fi
+
+      - name: Pick a Gradle entry point
+        id: gradle
+        run: |
+          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -x gradlew ]; then
+            echo "cmd=./gradlew" >> "$GITHUB_OUTPUT"
+            echo "Using the committed Gradle wrapper."
+          else
+            echo "cmd=gradle" >> "$GITHUB_OUTPUT"
+            echo "No gradle-wrapper.jar committed; using the provisioned Gradle."
+          fi
+
+      # Includes the Robolectric database and migration tests, so the data layer is covered
+      # here without an emulator. The instrumented Compose test needs a device and is not run.
+      - name: Unit tests
+        run: ${{ steps.gradle.outputs.cmd }} testDebugUnitTest --no-daemon --stacktrace
+
+      # Style only — deliberately non-blocking until the baseline is clean.
+      - name: ktlint
+        continue-on-error: true
+        run: ${{ steps.gradle.outputs.cmd }} ktlintCheck --no-daemon
+
+      - name: Android Lint
+        run: ${{ steps.gradle.outputs.cmd }} lintDebug --no-daemon
+
+      - name: Assemble debug APK
+        run: ${{ steps.gradle.outputs.cmd }} assembleDebug --no-daemon
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: app/build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.html
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: ignore
+          retention-days: 14

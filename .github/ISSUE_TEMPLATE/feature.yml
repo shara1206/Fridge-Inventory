@@ -1,0 +1,23 @@
+name: Idea
+description: A feature or change worth considering.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is annoying today?
+      description: The problem, not the solution — it usually suggests a better fix.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you do about it?
+
+  - type: checkboxes
+    id: offline
+    attributes:
+      label: Constraint check
+      options:
+        - label: This can work without network access, or I have said below why it cannot.

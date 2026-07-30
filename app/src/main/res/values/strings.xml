@@ -1,0 +1,131 @@
+<resources>
+    <string name="app_name">Fridge</string>
+
+    <!-- Storage areas -->
+    <string name="area_fridge">Fridge</string>
+    <string name="area_freezer">Freezer</string>
+    <string name="area_pantry">Pantry</string>
+
+    <!-- Categories -->
+    <string name="cat_vegetables">Vegetables</string>
+    <string name="cat_fruit">Fruit</string>
+    <string name="cat_meat">Meat</string>
+    <string name="cat_seafood">Seafood</string>
+    <string name="cat_tofu_soy">Tofu &amp; soy</string>
+    <string name="cat_dairy_eggs">Dairy &amp; eggs</string>
+    <string name="cat_frozen_staples">Frozen staples</string>
+    <string name="cat_grains_noodles">Grains &amp; noodles</string>
+    <string name="cat_seasoning">Seasoning</string>
+    <string name="cat_snacks">Snacks</string>
+    <string name="cat_beverage">Drinks</string>
+    <string name="cat_prepared">Ready to eat</string>
+    <string name="cat_other">Other</string>
+
+    <!-- Why an item left -->
+    <string name="reason_used">Eaten</string>
+    <string name="reason_discarded">Thrown out</string>
+
+    <!-- Shared actions -->
+    <string name="filter_all">All</string>
+    <string name="action_save">Save</string>
+    <string name="action_back">Back</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_settings">Settings</string>
+    <string name="action_history">History</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_restore">Put back</string>
+    <string name="action_clear">Clear</string>
+
+    <!-- Inventory -->
+    <string name="title_inventory">Fridge</string>
+    <string name="inventory_search">Search</string>
+    <string name="inventory_empty">Nothing logged yet. Scan a receipt or add an item.</string>
+    <string name="inventory_add_manual">Add item manually</string>
+    <string name="inventory_scan">Scan receipt</string>
+    <string name="inventory_mark_used">Mark as eaten</string>
+    <string name="inventory_mark_discarded">Threw it out</string>
+    <string name="inventory_summary_items">%1$d items</string>
+    <string name="inventory_summary_expired">%1$d expired</string>
+    <string name="inventory_summary_due">%1$d due soon</string>
+    <string name="inventory_finished">Removed %1$s</string>
+    <string name="expiry_untracked">—</string>
+    <string name="expiry_over">%1$dd over</string>
+    <string name="expiry_today">today</string>
+    <string name="expiry_days">%1$dd</string>
+
+    <!-- Add / edit -->
+    <string name="title_add_item">Add item</string>
+    <string name="title_edit_item">Edit item</string>
+    <string name="field_name">Name</string>
+    <string name="field_qty">Qty</string>
+    <string name="field_unit">Unit</string>
+    <string name="field_price">Price</string>
+    <string name="field_notes">Notes</string>
+    <string name="action_guess">Guess category &amp; expiry from name</string>
+    <string name="section_where">Where</string>
+    <string name="section_category">Category</string>
+    <string name="section_store">Store</string>
+    <string name="section_dates">Dates</string>
+    <string name="section_use_some">Used some of it</string>
+    <string name="date_bought">Bought %1$s</string>
+    <string name="date_expires">Expires %1$s</string>
+    <string name="date_set_expiry">Set expiry</string>
+    <string name="date_shift">+%1$dd</string>
+    <string name="use_amount">−%1$s</string>
+    <string name="error_qty">Enter a number greater than 0</string>
+    <string name="error_price">Enter an amount like 4.99</string>
+    <string name="merged_into_existing">Added to the one already in the %1$s</string>
+
+    <!-- Scan -->
+    <string name="title_scan">Scan receipt</string>
+    <string name="scan_take_photo">Take photo</string>
+    <string name="scan_pick_image">Pick image</string>
+    <string name="scan_reading">Reading receipt…</string>
+    <string name="scan_hint">Photograph the receipt flat, in even light, with the item lines filling the frame.</string>
+    <string name="scan_no_lines">No item lines found. Try a flatter photo in better light.</string>
+    <string name="scan_unreadable">Could not read that image.</string>
+    <string name="scan_header">%1$s · %2$s · %3$d of %4$d</string>
+    <string name="scan_date_unknown">date not found</string>
+    <string name="scan_no_price">no price</string>
+    <string name="scan_select_all">Select all</string>
+    <string name="scan_select_none">Select none</string>
+    <string name="scan_add_items">Add %1$d items</string>
+
+    <!-- Settings -->
+    <string name="title_settings">Settings</string>
+    <string name="setting_reminders">Expiry reminders</string>
+    <string name="setting_reminders_desc">One notification a day for anything about to go off.</string>
+    <string name="section_warn_me">Warn me</string>
+    <string name="section_at">At</string>
+    <string name="lead_same_day">same day</string>
+    <string name="lead_days">%1$d days</string>
+    <string name="hour_label">%1$02d:00</string>
+    <string name="privacy_note">The app has no internet permission. Notification access is requested only when you turn reminders on, and reminders are off until you do.</string>
+
+    <!-- History and waste -->
+    <string name="title_history">History</string>
+    <string name="history_empty">Nothing has left the kitchen yet.</string>
+    <string name="waste_window">Last 30 days</string>
+    <string name="waste_eaten">%1$d eaten</string>
+    <string name="waste_thrown">%1$d thrown out</string>
+    <string name="waste_percent">%1$d%% wasted</string>
+    <string name="waste_percent_none">not enough data yet</string>
+    <string name="waste_money">%1$s thrown away</string>
+    <string name="waste_by_category">Most wasted categories</string>
+    <string name="waste_by_store">By store</string>
+    <string name="waste_count_suffix">× %1$d</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_name">Expiry reminders</string>
+    <string name="notif_channel_desc">A daily summary of food about to go off.</string>
+    <string name="notif_title_expired">%1$d expired</string>
+    <string name="notif_title_due">%1$d due soon</string>
+    <string name="notif_title_both">%1$d expired, %2$d due soon</string>
+    <string name="notif_entry">%1$s (%2$s)</string>
+    <string name="notif_more">and %1$d more</string>
+    <string name="notif_days_over">%1$d days over</string>
+    <string name="notif_day_over">1 day over</string>
+    <string name="notif_today">today</string>
+    <string name="notif_tomorrow">tomorrow</string>
+    <string name="notif_in_days">in %1$d days</string>
+</resources>

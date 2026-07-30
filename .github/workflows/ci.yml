@@ -29,7 +29,7 @@ jobs:
       # Provisions Gradle 8.9 on PATH and handles the dependency cache, so this
       # workflow runs whether or not gradle-wrapper.jar is committed yet.
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.9'
 

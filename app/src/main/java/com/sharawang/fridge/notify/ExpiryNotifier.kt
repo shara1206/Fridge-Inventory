@@ -1,6 +1,7 @@
 package com.sharawang.fridge.notify
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -20,6 +21,9 @@ import com.sharawang.fridge.R
  */
 class ExpiryNotifier(private val context: Context) {
 
+    // canPost() (below) already checks POST_NOTIFICATIONS before we get here;
+    // lint can't trace that across methods, so suppress its false positive.
+    @SuppressLint("MissingPermission")
     fun post(summary: ExpirySummary.Summary) {
         if (!canPost()) return
         ensureChannel()

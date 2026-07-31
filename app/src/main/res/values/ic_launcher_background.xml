@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#2E7D32</color>
+    <!-- Warm beige sampled from the logo's outer ring, so the illustration's
+         circle sits on a matching field once the launcher applies its mask. -->
+    <color name="ic_launcher_background">#E4D4BD</color>
 </resources>

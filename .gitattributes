@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Never run EOL normalization on image assets (launcher icons, docs artwork).
+*.png binary
+*.jpg binary
+*.webp binary

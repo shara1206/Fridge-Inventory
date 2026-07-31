@@ -83,7 +83,7 @@ class ParserTest {
         val receipt = parse(SampleReceipts.TT)
         assertEquals(3, receipt.lines.size)
         assertTrue(names(receipt).any { it.contains("上海青") && it.contains("Bok Choy") })
-        val bokChoy = receipt.lines.first { it.contains("上海青") }
+        val bokChoy = receipt.lines.first { it.name.contains("上海青") }
         assertEquals(329, bokChoy.priceCents)
     }
 

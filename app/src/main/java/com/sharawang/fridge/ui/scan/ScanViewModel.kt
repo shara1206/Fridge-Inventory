@@ -66,7 +66,7 @@ class ScanViewModel(
                                 parsed = line,
                                 name = line.name,
                                 keep = line.confidence >= 0.7f,
-                                storageArea = ShelfLife.guess(line.name).area
+                                storageArea = ShelfLife.guess(line.name).storageArea
                             )
                         },
                         // Wording lives in the UI layer so it can be localised.

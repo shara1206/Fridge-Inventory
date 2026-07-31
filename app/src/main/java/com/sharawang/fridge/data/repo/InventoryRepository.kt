@@ -142,7 +142,7 @@ class InventoryRepository(
         return FoodItem(
             name = name,
             category = guess.category,
-            storageArea = guess.area,
+            storageArea = guess.storageArea,
             quantity = quantity,
             purchasedOn = purchasedOn,
             expiresOn = purchasedOn.plusDays(guess.days.toLong()),

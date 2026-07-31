@@ -78,7 +78,7 @@ class ItemEditViewModel(
         _uiState.update {
             it.copy(
                 category = guess.category,
-                storageArea = guess.area,
+                storageArea = guess.storageArea,
                 expiresOn = it.purchasedOn.plusDays(guess.days.toLong())
             )
         }

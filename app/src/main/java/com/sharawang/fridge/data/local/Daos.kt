@@ -42,6 +42,10 @@ interface FoodItemDao {
     @Query("SELECT * FROM food_items WHERE finishedOn IS NOT NULL ORDER BY finishedOn DESC LIMIT 200")
     fun observeHistory(): Flow<List<FoodItem>>
 
+    /** Everything ever recorded, finished or not. Backup export reads through this. */
+    @Query("SELECT * FROM food_items ORDER BY id ASC")
+    suspend fun getAll(): List<FoodItem>
+
     /** Feeds the waste report. */
     @Query(
         """
@@ -108,6 +112,10 @@ interface FoodItemDao {
         """
     )
     suspend fun restore(id: Long, quantity: Double)
+
+    /** Only ever called behind an explicit "replace everything" confirmation on import. */
+    @Query("DELETE FROM food_items")
+    suspend fun deleteAll()
 }
 
 @Dao

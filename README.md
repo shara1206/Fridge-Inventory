@@ -22,14 +22,26 @@ is on the roadmap but deliberately not the current focus.
 
 - Inventory list sorted by what expires soonest, filterable on **two axes**: storage area
   (fridge / freezer / pantry) and shopping-aisle category, plus search
+- A row is flagged only when it is **within 7 days of expiry, or already past it**. Everything
+  else — undated items, food that keeps for months — shows no badge at all, so the badges that
+  do appear are worth reading
 - 13 categories built around how you actually shop — vegetables, fruit, meat, seafood,
   tofu & soy, dairy & eggs, frozen staples, grains & noodles, seasoning, snacks, drinks,
   ready to eat, other. Only categories present in the kitchen appear in the filter row
 - English and Chinese UI labels (`values/` and `values-zh/`)
-- Manual entry with category, storage area, quantity, unit, store, price and notes
-- Expiry dates guessed from the item name via a keyword shelf-life table, always overridable
+- Manual entry with category, storage area, quantity, store, price and notes
+- Quantity is a bare count — no unit field, because the item's name already says what the
+  thing is. On the list, **−/+ are events**: + is "bought another" (moves the purchase date),
+  − is "ate one" (and eating the last one finishes the row as eaten, with undo). In the item
+  editor the same buttons are **corrections** — they fix a wrong number and write no history
+- Category and storage area guessed from the item name via a keyword shelf-life table
+- **Expiry is optional and starts empty** — no guessed date pretending to be a fact. Shortcuts
+  for 2 weeks / 1 month / 3 months from the purchase date, or pick any date on the calendar;
+  items without one simply never nag
 - Optional daily expiry reminder — **off by default**, and the notification permission is
   only requested if you turn it on
+- Export and import the whole inventory as JSON from Settings, through the system file
+  picker — no storage permission, and importing asks whether to merge or replace
 - Two outcomes when something leaves the kitchen — eaten or thrown out — feeding a waste
   report (how much you binned, which categories, which store), with undo on every removal
 - Partial use: knock 0.25 / 0.5 / 1 off an item instead of only finishing the whole thing
@@ -144,7 +156,8 @@ no emulator:
 | `ReminderSchedulerTest` | Next-occurrence timing, clamping, never-zero delay |
 | `WasteReportTest` | Eaten vs binned, money, ranking, legacy rows with no reason |
 | `FoodItemDaoTest` | Room queries under Robolectric — ordering, filters, restore |
-| `InventoryRepositoryTest` | Merging, partial use, receipt commit, waste aggregation |
+| `InventoryRepositoryTest` | Merging, partial use, quantity stepping, receipt commit, waste aggregation |
+| `InventoryBackupTest` | JSON export/import round trip, and what a bad file does |
 | `MigrationTest` | A hand-built v1 database run through the real migration |
 | `InventoryScreenTest` | Instrumented: the screen composes and renders a row |
 
@@ -171,6 +184,11 @@ independent: frozen shrimp is still seafood, it just keeps for months. `ShelfLif
 category from the longest matching keyword, then a separate "frozen" override moves the item
 to the freezer and extends its life — so `Frozen Blueberries` lands in fruit + freezer rather
 than being mislabelled as a frozen staple.
+
+The table's `days` figure is *not* written into new items. A guessed date reads as a fact once
+it is sitting in the field, and a wrong one either nags about food that is fine or stays quiet
+about food that is not — so expiry stays empty until someone sets it, and only the category and
+storage guesses are used.
 
 Enum *names* are the persisted database values, so renaming a `FoodCategory` constant is a
 schema change. `MIGRATION_1_2` is exactly that: it remaps the old coarse categories

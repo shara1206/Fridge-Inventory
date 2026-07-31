@@ -1,11 +1,14 @@
 package com.sharawang.fridge.ui.settings
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.sharawang.fridge.AppContainer
 import com.sharawang.fridge.data.ReminderSettings
 import com.sharawang.fridge.data.SettingsRepository
+import com.sharawang.fridge.data.backup.BackupRepository
+import com.sharawang.fridge.data.backup.ImportMode
 import com.sharawang.fridge.notify.ReminderScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,9 +18,20 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/**
+ * One-shot result of an export or import, shown once in a snackbar and then cleared.
+ * Modelled as data rather than a formatted string so the strings stay in resources.
+ */
+sealed interface BackupResult {
+    data class Exported(val count: Int) : BackupResult
+    data class Imported(val count: Int) : BackupResult
+    data class Failed(val reason: String?) : BackupResult
+}
+
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
-    private val scheduler: ReminderScheduler
+    private val scheduler: ReminderScheduler,
+    private val backupRepository: BackupRepository
 ) : ViewModel() {
 
     val settings: StateFlow<ReminderSettings> = settingsRepository.settings
@@ -59,11 +73,47 @@ class SettingsViewModel(
         if (settingsRepository.settings.first().enabled) scheduler.schedule(hour)
     }
 
+    // ---- backup -------------------------------------------------------------
+
+    private val _backupResult = MutableStateFlow<BackupResult?>(null)
+    val backupResult: StateFlow<BackupResult?> = _backupResult.asStateFlow()
+
+    private val _busy = MutableStateFlow(false)
+    val busy: StateFlow<Boolean> = _busy.asStateFlow()
+
+    fun suggestedFileName(): String = backupRepository.suggestedFileName()
+
+    fun export(uri: Uri) = runBackup { BackupResult.Exported(backupRepository.exportTo(uri)) }
+
+    fun import(uri: Uri, mode: ImportMode) = runBackup {
+        BackupResult.Imported(backupRepository.importFrom(uri, mode))
+    }
+
+    /**
+     * A failed import must not look like a successful one, so every failure surfaces —
+     * the file the user picked may simply have been the wrong file.
+     */
+    private fun runBackup(block: suspend () -> BackupResult) = viewModelScope.launch {
+        _busy.value = true
+        _backupResult.value = try {
+            block()
+        } catch (e: Exception) {
+            BackupResult.Failed(e.message)
+        }
+        _busy.value = false
+    }
+
+    fun clearBackupResult() { _backupResult.value = null }
+
     companion object {
         fun factory(container: AppContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                SettingsViewModel(container.settingsRepository, container.reminderScheduler) as T
+                SettingsViewModel(
+                    container.settingsRepository,
+                    container.reminderScheduler,
+                    container.backupRepository
+                ) as T
         }
     }
 }

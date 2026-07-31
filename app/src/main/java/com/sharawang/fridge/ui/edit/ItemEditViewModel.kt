@@ -24,6 +24,11 @@ data class EditUiState(
     val category: FoodCategory = FoodCategory.OTHER,
     val storageArea: StorageArea = StorageArea.FRIDGE,
     val quantityText: String = "1",
+    /**
+     * Not editable and not shown anywhere — quantity is a bare count now. Carried through
+     * the form only so that opening an old item and saving it does not quietly overwrite a
+     * unit that an earlier version stored and that is still sitting in someone's backup.
+     */
     val unit: String = "ea",
     val purchasedOn: LocalDate = LocalDate.now(),
     val expiresOn: LocalDate? = null,
@@ -70,32 +75,53 @@ class ItemEditViewModel(
 
     fun onName(value: String) = _uiState.update { it.copy(name = value) }
 
-    /** Fills category / area / expiry from the shelf-life table on demand. */
+    /**
+     * Fills category and storage area from the shelf-life table on demand.
+     *
+     * Expiry is left alone. A guessed date reads as a fact once it is in the field, and the
+     * table only knows about food in general, not about the thing in your fridge.
+     */
     fun autofillFromName() {
         val state = _uiState.value
         if (state.name.isBlank()) return
         val guess = ShelfLife.guess(state.name)
         _uiState.update {
-            it.copy(
-                category = guess.category,
-                storageArea = guess.storageArea,
-                expiresOn = it.purchasedOn.plusDays(guess.days.toLong())
-            )
+            it.copy(category = guess.category, storageArea = guess.storageArea)
         }
     }
 
     fun onCategory(value: FoodCategory) = _uiState.update { it.copy(category = value) }
     fun onArea(value: StorageArea) = _uiState.update { it.copy(storageArea = value) }
     fun onQuantity(value: String) = _uiState.update { it.copy(quantityText = value) }
-    fun onUnit(value: String) = _uiState.update { it.copy(unit = value) }
     fun onStore(value: Store) = _uiState.update { it.copy(store = value) }
     fun onPrice(value: String) = _uiState.update { it.copy(priceText = value) }
     fun onNotes(value: String) = _uiState.update { it.copy(notes = value) }
     fun onPurchasedOn(value: LocalDate) = _uiState.update { it.copy(purchasedOn = value) }
     fun onExpiresOn(value: LocalDate?) = _uiState.update { it.copy(expiresOn = value) }
 
-    fun shiftExpiry(days: Long) = _uiState.update {
-        it.copy(expiresOn = (it.expiresOn ?: it.purchasedOn).plusDays(days))
+    /**
+     * Sets the expiry to a whole number of months from the purchase date.
+     *
+     * Anchored on the purchase date rather than on today, so re-tapping "3 months" on an
+     * item bought last week gives the same answer twice instead of quietly sliding.
+     */
+    fun setExpiryInMonths(months: Long) = _uiState.update {
+        it.copy(expiresOn = it.purchasedOn.plusMonths(months))
+    }
+
+    fun setExpiryInWeeks(weeks: Long) = _uiState.update {
+        it.copy(expiresOn = it.purchasedOn.plusWeeks(weeks))
+    }
+
+    /**
+     * The −/+ beside the quantity field. A correction to a wrong number, nothing more: it
+     * edits the form and waits for Save, unlike the list's buttons, which record that you
+     * ate one or bought another. 1 is the floor — zero means the item is gone, and that is
+     * a different action with a different reason attached.
+     */
+    fun stepQuantity(delta: Double) = _uiState.update {
+        val next = (it.quantity + delta).coerceAtLeast(1.0)
+        it.copy(quantityText = formatQuantity(next))
     }
 
     /**
@@ -133,7 +159,7 @@ class ItemEditViewModel(
                 category = state.category,
                 storageArea = state.storageArea,
                 quantity = state.quantity,
-                unit = state.unit.ifBlank { "ea" },
+                unit = state.unit,
                 purchasedOn = state.purchasedOn,
                 expiresOn = state.expiresOn,
                 store = state.store,

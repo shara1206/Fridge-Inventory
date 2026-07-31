@@ -44,11 +44,12 @@
     <string name="inventory_scan">Scan receipt</string>
     <string name="inventory_mark_used">Mark as eaten</string>
     <string name="inventory_mark_discarded">Threw it out</string>
+    <string name="qty_increase">Bought another</string>
+    <string name="qty_decrease">Ate one</string>
     <string name="inventory_summary_items">%1$d items</string>
     <string name="inventory_summary_expired">%1$d expired</string>
     <string name="inventory_summary_due">%1$d due soon</string>
     <string name="inventory_finished">Removed %1$s</string>
-    <string name="expiry_untracked">—</string>
     <string name="expiry_over">%1$dd over</string>
     <string name="expiry_today">today</string>
     <string name="expiry_days">%1$dd</string>
@@ -58,10 +59,9 @@
     <string name="title_edit_item">Edit item</string>
     <string name="field_name">Name</string>
     <string name="field_qty">Qty</string>
-    <string name="field_unit">Unit</string>
     <string name="field_price">Price</string>
     <string name="field_notes">Notes</string>
-    <string name="action_guess">Guess category &amp; expiry from name</string>
+    <string name="action_guess">Guess category &amp; storage from name</string>
     <string name="section_where">Where</string>
     <string name="section_category">Category</string>
     <string name="section_store">Store</string>
@@ -70,11 +70,16 @@
     <string name="date_bought">Bought %1$s</string>
     <string name="date_expires">Expires %1$s</string>
     <string name="date_set_expiry">Set expiry</string>
-    <string name="date_shift">+%1$dd</string>
+    <string name="expiry_optional">Optional. Leave it empty and nothing will nag you about this one.</string>
+    <string name="expiry_2_weeks">2 weeks</string>
+    <string name="expiry_1_month">1 month</string>
+    <string name="expiry_3_months">3 months</string>
     <string name="use_amount">−%1$s</string>
     <string name="error_qty">Enter a number greater than 0</string>
     <string name="error_price">Enter an amount like 4.99</string>
     <string name="merged_into_existing">Added to the one already in the %1$s</string>
+    <string name="delete_confirm_title">Delete this item?</string>
+    <string name="delete_confirm_body">%1$s will be removed entirely, and will not appear in the waste report.</string>
 
     <!-- Scan -->
     <string name="title_scan">Scan receipt</string>
@@ -100,6 +105,17 @@
     <string name="lead_same_day">same day</string>
     <string name="lead_days">%1$d days</string>
     <string name="hour_label">%1$02d:00</string>
+    <string name="section_backup">Backup</string>
+    <string name="backup_desc">Save the whole inventory to a JSON file, or read one back in. The file stays on your device unless you move it.</string>
+    <string name="action_export">Export</string>
+    <string name="action_import">Import</string>
+    <string name="backup_exported">Exported %1$d items</string>
+    <string name="backup_imported">Imported %1$d items</string>
+    <string name="backup_failed">Could not read that file. %1$s</string>
+    <string name="import_mode_title">Import how?</string>
+    <string name="import_mode_body">Merge adds the file to what you already have, folding repeats into one line. Replace deletes everything currently logged first — use that when moving to a new phone.</string>
+    <string name="import_merge">Merge</string>
+    <string name="import_replace">Replace all</string>
     <string name="privacy_note">The app has no internet permission. Notification access is requested only when you turn reminders on, and reminders are off until you do.</string>
 
     <!-- History and waste -->

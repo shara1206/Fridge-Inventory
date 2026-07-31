@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -20,10 +22,12 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -48,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sharawang.fridge.R
@@ -200,7 +205,9 @@ fun InventoryScreen(
                         ItemRow(
                             item = item,
                             onOpen = { onOpenItem(item.id) },
-                            onFinish = { reason -> viewModel.finish(item, reason) }
+                            onFinish = { reason -> viewModel.finish(item, reason) },
+                            onBuyAnother = { viewModel.buyAnother(item) },
+                            onUseOne = { viewModel.useOne(item) }
                         )
                     }
                 }
@@ -253,56 +260,121 @@ private fun <T> FilterRow(
 private fun ItemRow(
     item: FoodItem,
     onOpen: () -> Unit,
-    onFinish: (FinishReason) -> Unit
+    onFinish: (FinishReason) -> Unit,
+    onBuyAnother: () -> Unit,
+    onUseOne: () -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onOpen)) {
-        Row(
-            Modifier.fillMaxWidth().padding(start = 12.dp, top = 8.dp, bottom = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(item.name, style = MaterialTheme.typography.titleMedium)
+        // Two lines rather than one: the stepper needs real tap targets, and squeezing it
+        // in beside the expiry chip and the two finish buttons left nothing legible.
+        Column(Modifier.fillMaxWidth().padding(start = 12.dp, top = 8.dp, bottom = 8.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    item.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                ExpiryChip(item)
+                // Two separate outcomes on purpose: without them the waste report can only
+                // report that food vanished.
+                IconButton(onClick = { onFinish(FinishReason.USED) }) {
+                    Icon(
+                        Icons.Filled.Check,
+                        contentDescription = stringResource(R.string.inventory_mark_used)
+                    )
+                }
+                IconButton(onClick = { onFinish(FinishReason.DISCARDED) }) {
+                    Icon(
+                        Icons.Filled.DeleteOutline,
+                        contentDescription = stringResource(R.string.inventory_mark_discarded),
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                }
+            }
+            Row(
+                Modifier.fillMaxWidth().padding(end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Text(
                     listOfNotNull(
-                        trim(item.quantity) + " " + item.unit,
                         stringResource(item.category.labelRes),
                         item.store.takeIf { it != Store.OTHER }?.label
                     ).joinToString(" · "),
-                    style = MaterialTheme.typography.labelMedium
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.weight(1f)
                 )
-            }
-            ExpiryChip(item)
-            // Two separate outcomes on purpose: without them the waste report can only
-            // report that food vanished.
-            IconButton(onClick = { onFinish(FinishReason.USED) }) {
-                Icon(
-                    Icons.Filled.Check,
-                    contentDescription = stringResource(R.string.inventory_mark_used)
-                )
-            }
-            IconButton(onClick = { onFinish(FinishReason.DISCARDED) }) {
-                Icon(
-                    Icons.Filled.DeleteOutline,
-                    contentDescription = stringResource(R.string.inventory_mark_discarded),
-                    tint = MaterialTheme.colorScheme.outline
+                QuantityStepper(
+                    quantity = item.quantity,
+                    onDecrease = onUseOne,
+                    onIncrease = onBuyAnother
                 )
             }
         }
     }
 }
 
+/**
+ * −  2  +
+ *
+ * A bare count, no unit. "2 bunch" was never worth the field it cost: what you want to know
+ * at a glance is how many of the thing are left, and the name already says what the thing is.
+ *
+ * Both buttons report something that happened in the kitchen rather than editing a number:
+ * + is "bought another", − is "ate one". So − runs all the way to zero, where it finishes
+ * the row as eaten — the same outcome as ✓, undo included.
+ */
+@Composable
+private fun QuantityStepper(
+    quantity: Double,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        FilledTonalIconButton(
+            onClick = onDecrease,
+            modifier = Modifier.size(32.dp)
+        ) {
+            Icon(
+                Icons.Filled.Remove,
+                contentDescription = stringResource(R.string.qty_decrease),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+        Text(
+            trim(quantity),
+            style = MaterialTheme.typography.labelLarge,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(min = 36.dp).padding(horizontal = 4.dp)
+        )
+        FilledTonalIconButton(onClick = onIncrease, modifier = Modifier.size(32.dp)) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = stringResource(R.string.qty_increase),
+                modifier = Modifier.size(18.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Shown only for food that is [DUE_SOON_DAYS] days out or already past it.
+ *
+ * A chip on every row taught you to stop reading chips. "—" on a tin of soy sauce and "9d"
+ * on yogurt you will obviously finish tomorrow are both noise, and noise is what makes the
+ * one row that actually needs eating tonight invisible. Nothing here means nothing to do.
+ */
 @Composable
 private fun ExpiryChip(item: FoodItem) {
-    val days = item.daysLeft(LocalDate.now())
+    val days = item.daysLeft(LocalDate.now()) ?: return
+    if (days > DUE_SOON_DAYS) return
+
     val palette = LocalExpiryColors.current
     val text = when {
-        days == null -> stringResource(R.string.expiry_untracked)
         days < 0 -> stringResource(R.string.expiry_over, -days)
         days == 0L -> stringResource(R.string.expiry_today)
         else -> stringResource(R.string.expiry_days, days)
     }
     val color = when {
-        days == null -> palette.untracked
         days < 0 -> palette.expired
         days <= 2 -> palette.dueSoon
         else -> palette.fresh

@@ -63,10 +63,67 @@ class InventoryRepositoryTest {
     @Test
     fun `merging keeps the earlier expiry so the older stock still gets flagged`() = runTest {
         val older = repository.draftFor("Bok Choy", purchasedOn = today.minusDays(3))
+            .copy(expiresOn = today.plusDays(1))
         repository.addOrMerge(older)
-        repository.addOrMerge(repository.draftFor("Bok Choy", purchasedOn = today))
+        repository.addOrMerge(
+            repository.draftFor("Bok Choy", purchasedOn = today)
+                .copy(expiresOn = today.plusDays(6))
+        )
 
-        assertEquals(older.expiresOn, repository.activeItems().first().single().expiresOn)
+        assertEquals(today.plusDays(1), repository.activeItems().first().single().expiresOn)
+    }
+
+    @Test
+    fun `a draft leaves the expiry unset rather than guessing a date`() {
+        assertNull(repository.draftFor("Baby Spinach", purchasedOn = today).expiresOn)
+    }
+
+    @Test
+    fun `an expiry set by hand survives a merge with an undated repeat purchase`() = runTest {
+        repository.addOrMerge(
+            repository.draftFor("Milk", purchasedOn = today).copy(expiresOn = today.plusDays(5))
+        )
+        repository.addOrMerge(repository.draftFor("Milk", purchasedOn = today))
+
+        assertEquals(today.plusDays(5), repository.activeItems().first().single().expiresOn)
+    }
+
+    // ---- the list's +/− are events, not edits -------------------------------
+
+    @Test
+    fun `buying another one moves the purchase date but leaves the expiry alone`() = runTest {
+        val id = repository.save(
+            repository.draftFor("Yogurt", purchasedOn = today.minusDays(4))
+                .copy(quantity = 2.0, expiresOn = today.plusDays(3))
+        ).id
+
+        repository.addOne(repository.item(id)!!, on = today)
+
+        val item = repository.item(id)!!
+        assertEquals(3.0, item.quantity, 0.0001)
+        assertEquals(today, item.purchasedOn)
+        assertEquals(today.plusDays(3), item.expiresOn)
+    }
+
+    @Test
+    fun `eating one of several just lowers the count`() = runTest {
+        val id = repository.save(repository.draftFor("Eggs").copy(quantity = 3.0)).id
+
+        repository.useAmount(repository.item(id)!!, 1.0)
+
+        val item = repository.item(id)!!
+        assertEquals(2.0, item.quantity, 0.0001)
+        assertNull(item.finishedOn)
+    }
+
+    @Test
+    fun `eating the last one finishes the row as eaten, not as waste`() = runTest {
+        val id = repository.save(repository.draftFor("Eggs").copy(quantity = 1.0)).id
+
+        repository.useAmount(repository.item(id)!!, 1.0)
+
+        assertEquals(FinishReason.USED, repository.item(id)!!.finishedReason)
+        assertTrue(repository.activeItems().first().isEmpty())
     }
 
     @Test

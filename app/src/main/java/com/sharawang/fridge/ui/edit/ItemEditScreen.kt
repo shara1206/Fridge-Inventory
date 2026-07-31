@@ -1,20 +1,29 @@
 package com.sharawang.fridge.ui.edit
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -58,6 +68,7 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showPurchasedPicker by remember { mutableStateOf(false) }
     var showExpiryPicker by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
 
     // On a merge, say so before leaving — otherwise the item appears to have vanished.
     LaunchedEffect(state.saved) {
@@ -100,13 +111,16 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
                     }
                 },
                 actions = {
-                    if (!state.isNew) {
-                        IconButton(onClick = viewModel::delete) {
-                            Icon(
-                                Icons.Filled.Delete,
-                                contentDescription = stringResource(R.string.action_delete)
-                            )
-                        }
+                    // Save lives here as well as at the bottom: the form is long enough
+                    // that the bottom button is often off-screen while you are editing.
+                    TextButton(
+                        onClick = viewModel::save,
+                        enabled = state.canSave,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    ) {
+                        Text(stringResource(R.string.action_save))
                     }
                 }
             )
@@ -130,7 +144,22 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
                 Text(stringResource(R.string.action_guess))
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Corrections, not events. The −/+ on the inventory list mean "ate one" and
+            // "bought another" and write history; these two only fix a number that was
+            // wrong, and nothing about them reaches the waste report.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilledTonalIconButton(
+                    onClick = { viewModel.stepQuantity(-1.0) },
+                    enabled = state.quantity > 1.0
+                ) {
+                    Icon(
+                        Icons.Filled.Remove,
+                        contentDescription = stringResource(R.string.qty_decrease)
+                    )
+                }
                 OutlinedTextField(
                     value = state.quantityText,
                     onValueChange = viewModel::onQuantity,
@@ -145,28 +174,28 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.weight(1f)
                 )
-                OutlinedTextField(
-                    value = state.unit,
-                    onValueChange = viewModel::onUnit,
-                    label = { Text(stringResource(R.string.field_unit)) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = state.priceText,
-                    onValueChange = viewModel::onPrice,
-                    label = { Text(stringResource(R.string.field_price)) },
-                    singleLine = true,
-                    isError = state.priceError,
-                    supportingText = if (state.priceError) {
-                        { Text(stringResource(R.string.error_price)) }
-                    } else {
-                        null
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.weight(1f)
-                )
+                FilledTonalIconButton(onClick = { viewModel.stepQuantity(1.0) }) {
+                    Icon(
+                        Icons.Filled.Add,
+                        contentDescription = stringResource(R.string.qty_increase)
+                    )
+                }
             }
+
+            OutlinedTextField(
+                value = state.priceText,
+                onValueChange = viewModel::onPrice,
+                label = { Text(stringResource(R.string.field_price)) },
+                singleLine = true,
+                isError = state.priceError,
+                supportingText = if (state.priceError) {
+                    { Text(stringResource(R.string.error_price)) }
+                } else {
+                    null
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                modifier = Modifier.fillMaxWidth()
+            )
 
             SectionLabel(stringResource(R.string.section_use_some))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -216,13 +245,30 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(1L, 3L, 7L).forEach { days ->
-                    TextButton(onClick = { viewModel.shiftExpiry(days) }) {
-                        Text(stringResource(R.string.date_shift, days))
-                    }
+            // Optional, and empty until you say otherwise. The shortcuts start at two weeks
+            // because anything shorter is worth picking a real date for.
+            Text(
+                stringResource(R.string.expiry_optional),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(
+                Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                TextButton(onClick = { viewModel.setExpiryInWeeks(2) }) {
+                    Text(stringResource(R.string.expiry_2_weeks))
                 }
-                TextButton(onClick = { viewModel.onExpiresOn(null) }) {
+                TextButton(onClick = { viewModel.setExpiryInMonths(1) }) {
+                    Text(stringResource(R.string.expiry_1_month))
+                }
+                TextButton(onClick = { viewModel.setExpiryInMonths(3) }) {
+                    Text(stringResource(R.string.expiry_3_months))
+                }
+                TextButton(
+                    onClick = { viewModel.onExpiresOn(null) },
+                    enabled = state.expiresOn != null
+                ) {
                     Text(stringResource(R.string.action_clear))
                 }
             }
@@ -239,7 +285,50 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
                 enabled = state.canSave,
                 modifier = Modifier.fillMaxWidth()
             ) { Text(stringResource(R.string.action_save)) }
+
+            // Delete moved off the app bar, where it sat one thumb-width from Back. Down
+            // here it is deliberate, and it asks first.
+            if (!state.isNew) {
+                TextButton(
+                    onClick = { showDeleteConfirm = true },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        Icons.Filled.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.action_delete))
+                }
+            }
         }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(stringResource(R.string.delete_confirm_title)) },
+            text = { Text(stringResource(R.string.delete_confirm_body, state.name)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirm = false
+                        viewModel.delete()
+                    }
+                ) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
     }
 
     if (showPurchasedPicker) {

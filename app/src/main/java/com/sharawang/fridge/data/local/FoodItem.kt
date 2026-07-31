@@ -21,6 +21,12 @@ data class FoodItem(
     val category: FoodCategory = FoodCategory.OTHER,
     val storageArea: StorageArea = StorageArea.FRIDGE,
     val quantity: Double = 1.0,
+    /**
+     * Vestigial. Quantity is a bare count in the UI now — "2 bunch" was never worth the
+     * field it cost, since the name already says what the thing is. The column stays so
+     * that units written by earlier versions survive in the database and in backups, and
+     * so that bringing the idea back needs no migration.
+     */
     val unit: String = "ea",
     val purchasedOn: LocalDate = LocalDate.now(),
     /** Null means "no expiry tracked". */

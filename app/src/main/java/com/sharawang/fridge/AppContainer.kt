@@ -2,6 +2,7 @@ package com.sharawang.fridge
 
 import android.content.Context
 import com.sharawang.fridge.data.SettingsRepository
+import com.sharawang.fridge.data.backup.BackupRepository
 import com.sharawang.fridge.data.local.AppDatabase
 import com.sharawang.fridge.data.repo.InventoryRepository
 import com.sharawang.fridge.notify.ReminderScheduler
@@ -17,4 +18,5 @@ class AppContainer(context: Context) {
     val scanner = ReceiptScanner()
     val settingsRepository = SettingsRepository(context.applicationContext)
     val reminderScheduler = ReminderScheduler(context.applicationContext)
+    val backupRepository = BackupRepository(context.applicationContext, repository)
 }

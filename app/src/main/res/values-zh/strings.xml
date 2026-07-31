@@ -39,11 +39,12 @@
     <string name="inventory_scan">扫小票</string>
     <string name="inventory_mark_used">吃掉了</string>
     <string name="inventory_mark_discarded">扔掉了</string>
+    <string name="qty_increase">又买了一份</string>
+    <string name="qty_decrease">吃掉了一份</string>
     <string name="inventory_summary_items">%1$d 件</string>
     <string name="inventory_summary_expired">%1$d 已过期</string>
     <string name="inventory_summary_due">%1$d 快到期</string>
     <string name="inventory_finished">已移除 %1$s</string>
-    <string name="expiry_untracked">—</string>
     <string name="expiry_over">过期 %1$d 天</string>
     <string name="expiry_today">今天</string>
     <string name="expiry_days">%1$d 天</string>
@@ -52,10 +53,9 @@
     <string name="title_edit_item">编辑</string>
     <string name="field_name">名称</string>
     <string name="field_qty">数量</string>
-    <string name="field_unit">单位</string>
     <string name="field_price">价格</string>
     <string name="field_notes">备注</string>
-    <string name="action_guess">根据名称猜分类和保质期</string>
+    <string name="action_guess">根据名称猜分类和存放位置</string>
     <string name="section_where">放在哪</string>
     <string name="section_category">分类</string>
     <string name="section_store">店铺</string>
@@ -64,11 +64,16 @@
     <string name="date_bought">购买 %1$s</string>
     <string name="date_expires">到期 %1$s</string>
     <string name="date_set_expiry">设置到期日</string>
-    <string name="date_shift">+%1$d 天</string>
+    <string name="expiry_optional">选填。留空就不会为这件东西提醒你。</string>
+    <string name="expiry_2_weeks">2 周</string>
+    <string name="expiry_1_month">1 个月</string>
+    <string name="expiry_3_months">3 个月</string>
     <string name="use_amount">−%1$s</string>
     <string name="error_qty">请输入大于 0 的数字</string>
     <string name="error_price">请输入类似 4.99 的金额</string>
     <string name="merged_into_existing">已合并到%1$s里原有的那份</string>
+    <string name="delete_confirm_title">删除这一条？</string>
+    <string name="delete_confirm_body">%1$s 会被彻底移除，也不会计入浪费统计。</string>
 
     <string name="title_scan">扫小票</string>
     <string name="scan_take_photo">拍照</string>
@@ -92,6 +97,17 @@
     <string name="lead_same_day">当天</string>
     <string name="lead_days">%1$d 天</string>
     <string name="hour_label">%1$02d:00</string>
+    <string name="section_backup">备份</string>
+    <string name="backup_desc">把整个库存导出成 JSON 文件，或者从文件导回来。文件只留在你的设备上，除非你自己挪走。</string>
+    <string name="action_export">导出</string>
+    <string name="action_import">导入</string>
+    <string name="backup_exported">已导出 %1$d 条</string>
+    <string name="backup_imported">已导入 %1$d 条</string>
+    <string name="backup_failed">这个文件读不出来。%1$s</string>
+    <string name="import_mode_title">怎么导入？</string>
+    <string name="import_mode_body">合并：把文件加到现有库存上，同名同位置的合成一条。覆盖：先清空现有全部记录，换手机时用这个。</string>
+    <string name="import_merge">合并</string>
+    <string name="import_replace">覆盖全部</string>
     <string name="privacy_note">应用没有联网权限。只有你打开提醒时才会申请通知权限，在那之前提醒一直是关闭的。</string>
 
     <string name="title_history">历史</string>

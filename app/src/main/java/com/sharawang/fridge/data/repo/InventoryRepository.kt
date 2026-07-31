@@ -87,6 +87,35 @@ class InventoryRepository(
     suspend fun restore(id: Long, quantity: Double) = foodItemDao.restore(id, quantity)
 
     /**
+     * You bought another one. Not a correction — a purchase — so the purchase date moves to
+     * today, exactly as it would if the same item came in on a receipt.
+     *
+     * The expiry date is left alone on purpose: the older stock is still the stock that
+     * needs eating first, and the new unit does not make it keep any longer.
+     */
+    suspend fun addOne(item: FoodItem, on: LocalDate = LocalDate.now()) {
+        foodItemDao.update(
+            item.copy(
+                quantity = item.quantity + 1,
+                purchasedOn = maxOf(item.purchasedOn, on)
+            )
+        )
+    }
+
+    /** Full table, finished rows included. Backup export reads through this. */
+    suspend fun allItems(): List<FoodItem> = foodItemDao.getAll()
+
+    /** Restores a backup wholesale. Only reached behind an explicit confirmation. */
+    suspend fun replaceAll(items: List<FoodItem>) {
+        foodItemDao.deleteAll()
+        foodItemDao.insertAll(items)
+    }
+
+    suspend fun insertAll(items: List<FoodItem>) {
+        foodItemDao.insertAll(items)
+    }
+
+    /**
      * Consumes [amount] of an item. Hitting zero (or below, from a sloppy tap) finishes the
      * row as USED rather than leaving a phantom 0-quantity item in the list.
      */
@@ -127,8 +156,11 @@ class InventoryRepository(
         if (a == null && b == null) null else (a ?: 0) + (b ?: 0)
 
     /**
-     * Builds a [FoodItem] draft with category / storage / expiry pre-filled from the
-     * shelf-life table. Used by both manual entry and receipt review.
+     * Builds a [FoodItem] draft with category and storage area guessed from the name.
+     *
+     * The expiry date is deliberately left null. A guessed date looks like a fact once it
+     * is sitting in the field, and a wrong one either nags about food that is fine or
+     * stays quiet about food that is not — so expiry stays empty until someone sets it.
      */
     fun draftFor(
         name: String,
@@ -145,7 +177,7 @@ class InventoryRepository(
             storageArea = guess.storageArea,
             quantity = quantity,
             purchasedOn = purchasedOn,
-            expiresOn = purchasedOn.plusDays(guess.days.toLong()),
+            expiresOn = null,
             store = store,
             priceCents = priceCents,
             purchaseId = purchaseId

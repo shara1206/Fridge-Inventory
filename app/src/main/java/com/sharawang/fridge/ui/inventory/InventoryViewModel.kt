@@ -20,6 +20,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
+/**
+ * How far ahead the list looks. One number so the header count and the row chips can never
+ * disagree — "2 due soon" above a list where nothing is flagged is worse than either alone.
+ */
+const val DUE_SOON_DAYS = 7L
+
 data class InventoryUiState(
     val items: List<FoodItem> = emptyList(),
     val query: String = "",
@@ -85,8 +91,8 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
                     .filter { candidate -> items.any { it.store == candidate } }
                     .takeIf { it.size > 1 }
                     .orEmpty(),
-                expiringSoon = items.count { (it.daysLeft(today) ?: 99) in 0..2 },
-                expired = items.count { (it.daysLeft(today) ?: 99) < 0 }
+                expiringSoon = items.count { (it.daysLeft(today) ?: Long.MAX_VALUE) in 0..DUE_SOON_DAYS },
+                expired = items.count { (it.daysLeft(today) ?: Long.MAX_VALUE) < 0 }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InventoryUiState())
 
@@ -97,6 +103,25 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
     fun setCategory(value: FoodCategory?) { category.value = value }
 
     fun setStore(value: Store?) { store.value = value }
+
+    /**
+     * The + and − on a row are *events*, not edits to a number: + means you bought another
+     * one, − means you ate one. Fixing a count that was simply wrong is the edit screen's
+     * job, and that path writes no history at all.
+     */
+    fun buyAnother(item: FoodItem) = viewModelScope.launch { repository.addOne(item) }
+
+    /**
+     * Eating the last one empties the row, which is the same thing the ✓ button does — so it
+     * records USED, feeds the waste report, and offers the same undo.
+     */
+    fun useOne(item: FoodItem) = viewModelScope.launch {
+        val emptied = item.quantity - 1.0 <= 0.0001
+        repository.useAmount(item, 1.0)
+        if (emptied) {
+            _lastFinished.value = UndoableFinish(item.id, item.name, item.quantity)
+        }
+    }
 
     fun finish(item: FoodItem, reason: FinishReason) = viewModelScope.launch {
         repository.markFinished(item.id, reason)

@@ -16,6 +16,8 @@ import com.sharawang.fridge.ui.history.HistoryScreen
 import com.sharawang.fridge.ui.history.HistoryViewModel
 import com.sharawang.fridge.ui.inventory.InventoryScreen
 import com.sharawang.fridge.ui.inventory.InventoryViewModel
+import com.sharawang.fridge.ui.labels.LabelsScreen
+import com.sharawang.fridge.ui.labels.LabelsViewModel
 import com.sharawang.fridge.ui.scan.ScanScreen
 import com.sharawang.fridge.ui.scan.ScanViewModel
 import com.sharawang.fridge.ui.settings.SettingsScreen
@@ -44,6 +46,7 @@ class MainActivity : ComponentActivity() {
                             onScanReceipt = { navController.navigate("scan") },
                             onOpenSettings = { navController.navigate("settings") },
                             onOpenHistory = { navController.navigate("history") },
+                            onOpenLabels = { navController.navigate("labels") },
                             onOpenItem = { id -> navController.navigate("edit/$id") }
                         )
                     }
@@ -65,6 +68,13 @@ class MainActivity : ComponentActivity() {
                     composable("history") {
                         HistoryScreen(
                             viewModel = viewModel(factory = HistoryViewModel.factory(container)),
+                            onDone = { navController.popBackStack() }
+                        )
+                    }
+
+                    composable("labels") {
+                        LabelsScreen(
+                            viewModel = viewModel(factory = LabelsViewModel.factory(container)),
                             onDone = { navController.popBackStack() }
                         )
                     }

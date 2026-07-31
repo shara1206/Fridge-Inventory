@@ -42,6 +42,9 @@ is on the roadmap but deliberately not the current focus.
   only requested if you turn it on
 - Export and import the whole inventory as JSON from Settings, through the system file
   picker — no storage permission, and importing asks whether to merge or replace
+- **Printable zone labels**: a Labels screen showing one card per fridge zone, exportable as
+  an A4 PDF (ten cards a page, drawn as vectors) to cut out and tape inside the door. Empty
+  zones still print, ruled, so they can be filled in by hand
 - Two outcomes when something leaves the kitchen — eaten or thrown out — feeding a waste
   report (how much you binned, which categories, which store), with undo on every removal
 - Partial use: knock 0.25 / 0.5 / 1 off an item instead of only finishing the whole thing
@@ -124,9 +127,11 @@ There is an issue template for exactly this — see
 app/src/main/java/com/sharawang/fridge/
 ├── AppContainer.kt          hand-rolled DI (swap for Hilt if this grows)
 ├── FridgeApplication.kt
-├── MainActivity.kt          Compose NavHost: inventory / edit / scan
+├── MainActivity.kt          Compose NavHost: inventory / edit / scan / labels
 ├── data/
 │   ├── ShelfLife.kt         keyword → category + storage area + days
+│   ├── backup/              JSON export and import
+│   ├── labels/              zone sheet model + PDF renderer (Canvas, no template asset)
 │   ├── local/               Room entities, DAOs, database, converters
 │   └── repo/                InventoryRepository — the only door to the database
 ├── receipt/
@@ -138,6 +143,7 @@ app/src/main/java/com/sharawang/fridge/
 └── ui/
     ├── inventory/           list, filters, search, mark-as-used
     ├── edit/                add / edit form
+    ├── labels/              printable zone sheet, preview and PDF export
     ├── scan/                capture and review
     └── theme/
 ```
@@ -158,6 +164,7 @@ no emulator:
 | `FoodItemDaoTest` | Room queries under Robolectric — ordering, filters, restore |
 | `InventoryRepositoryTest` | Merging, partial use, quantity stepping, receipt commit, waste aggregation |
 | `InventoryBackupTest` | JSON export/import round trip, and what a bad file does |
+| `LabelSheetTest` | Which card each item lands on, extras, and what stays off the sheet |
 | `MigrationTest` | A hand-built v1 database run through the real migration |
 | `InventoryScreenTest` | Instrumented: the screen composes and renders a row |
 
@@ -223,10 +230,11 @@ report that food vanished.
 - [x] Per-line storage area override on the receipt review screen
 - [x] Input validation on quantity and price
 - [x] Database, repository and migration tests on the JVM; one instrumented Compose test
+- [x] JSON export / import for backups, through the system file picker
+- [x] Printable zone labels as an A4 PDF, drawn rather than stamped onto a template
 
 **Next**
 
-- [ ] JSON export / import for backups
 - [ ] Shopping list generated from what is running low
 - [ ] Clean the ktlint baseline, then flip `ignoreFailures` to false
 - [ ] Widen the instrumented suite past the single smoke test

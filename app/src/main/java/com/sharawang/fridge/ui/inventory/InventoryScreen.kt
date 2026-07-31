@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
@@ -72,6 +73,7 @@ fun InventoryScreen(
     onScanReceipt: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenLabels: () -> Unit,
     onOpenItem: (Long) -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -103,6 +105,12 @@ fun InventoryScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ),
                 actions = {
+                    IconButton(onClick = onOpenLabels) {
+                        Icon(
+                            Icons.Filled.Label,
+                            contentDescription = stringResource(R.string.action_labels)
+                        )
+                    }
                     IconButton(onClick = onOpenHistory) {
                         Icon(
                             Icons.Filled.History,

@@ -134,4 +134,26 @@
     <string name="notif_today">今天</string>
     <string name="notif_tomorrow">明天</string>
     <string name="notif_in_days">%1$d 天后</string>
+
+    <!-- 分区标签 -->
+    <string name="title_labels">标签</string>
+    <string name="action_labels">分区标签</string>
+    <string name="action_export_pdf">导出 PDF</string>
+    <string name="labels_desc">每个分区一张卡，A4 一页十张。导出打印，剪开贴在冰箱门里。</string>
+    <string name="labels_count">%1$d 条 · %2$d 页</string>
+    <string name="labels_empty_card">这格是空的，打印出来手写。</string>
+    <string name="labels_extra_section">额外卡片</string>
+    <string name="labels_exported">已生成标签，共 %1$d 条</string>
+    <string name="labels_failed">这个文件写不了。%1$s</string>
+
+    <!-- 卡片抬头：比分类名更具体，贴在抽屉上要一眼说清这格放什么 -->
+    <string name="zone_dairy_eggs">乳制品 · 蛋</string>
+    <string name="zone_vegetables">蔬菜</string>
+    <string name="zone_fruit">水果</string>
+    <string name="zone_tofu_soy">豆制品</string>
+    <string name="zone_prepared">即食 · 加工</string>
+    <string name="zone_meat">生鲜肉类</string>
+    <string name="zone_seafood">海鲜 · 水产</string>
+    <string name="zone_snacks">冰淇淋 · 甜点</string>
+    <string name="zone_frozen_staples">速冻主食</string>
 </resources>

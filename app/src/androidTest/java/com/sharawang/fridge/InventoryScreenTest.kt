@@ -53,6 +53,7 @@ class InventoryScreenTest {
                     onScanReceipt = {},
                     onOpenSettings = {},
                     onOpenHistory = {},
+                    onOpenLabels = {},
                     onOpenItem = {}
                 )
             }

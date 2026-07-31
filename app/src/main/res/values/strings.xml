@@ -144,4 +144,26 @@
     <string name="notif_today">today</string>
     <string name="notif_tomorrow">tomorrow</string>
     <string name="notif_in_days">in %1$d days</string>
+    <!-- Zone labels -->
+    <string name="title_labels">Labels</string>
+    <string name="action_labels">Zone labels</string>
+    <string name="action_export_pdf">Export as PDF</string>
+    <string name="labels_desc">One card per zone, ten to an A4 page. Export it, print it, cut them apart and tape them inside the door.</string>
+    <string name="labels_count">%1$d items · %2$d pages</string>
+    <string name="labels_empty_card">Empty. Print it and write it in.</string>
+    <string name="labels_extra_section">Extra cards</string>
+    <string name="labels_exported">Sheet saved, %1$d items on it</string>
+    <string name="labels_failed">Could not write that file. %1$s</string>
+
+    <!-- Headings on the printed sheet. Wordier than the category names on purpose: a card
+         taped to a freezer drawer has to say what the drawer is for. -->
+    <string name="zone_dairy_eggs">Dairy · Eggs</string>
+    <string name="zone_vegetables">Vegetables</string>
+    <string name="zone_fruit">Fruit</string>
+    <string name="zone_tofu_soy">Tofu &amp; soy</string>
+    <string name="zone_prepared">Ready · Prepared</string>
+    <string name="zone_meat">Fresh meat</string>
+    <string name="zone_seafood">Seafood · Fish</string>
+    <string name="zone_snacks">Ice cream · Dessert</string>
+    <string name="zone_frozen_staples">Frozen staples</string>
 </resources>

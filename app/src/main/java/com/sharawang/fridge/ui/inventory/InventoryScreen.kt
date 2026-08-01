@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -28,15 +26,14 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -137,33 +134,44 @@ fun InventoryScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            Column(horizontalAlignment = Alignment.End) {
-                SmallFloatingActionButton(onClick = onAddManual) {
+        }
+    ) { padding ->
+        Column(Modifier.padding(padding).fillMaxSize()) {
+            // Add and scan share the search row instead of floating over the list. Search
+            // rarely needs a whole line to itself, and floating buttons sat on top of the
+            // last item in the list — the one nearest its expiry date, and so the one you
+            // were most likely trying to read.
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = state.query,
+                    onValueChange = viewModel::setQuery,
+                    label = { Text(stringResource(R.string.inventory_search)) },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f)
+                )
+                FilledTonalIconButton(
+                    onClick = onAddManual,
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(
                         Icons.Filled.Add,
                         contentDescription = stringResource(R.string.inventory_add_manual)
                     )
                 }
-                Spacer(Modifier.height(12.dp))
-                FloatingActionButton(onClick = onScanReceipt) {
+                FilledIconButton(
+                    onClick = onScanReceipt,
+                    modifier = Modifier.size(48.dp)
+                ) {
                     Icon(
                         Icons.Filled.DocumentScanner,
                         contentDescription = stringResource(R.string.inventory_scan)
                     )
                 }
             }
-        }
-    ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            OutlinedTextField(
-                value = state.query,
-                onValueChange = viewModel::setQuery,
-                label = { Text(stringResource(R.string.inventory_search)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            )
 
             FilterRow(
                 selectedIsAll = state.area == null,
@@ -206,7 +214,7 @@ fun InventoryScreen(
                 )
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 96.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.items, key = { it.id }) { item ->

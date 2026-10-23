@@ -74,21 +74,30 @@ fun InventoryScreen(
     onOpenItem: (Long) -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val lastFinished by viewModel.lastFinished.collectAsStateWithLifecycle()
+    val lastConsumption by viewModel.lastConsumption.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val undoLabel = stringResource(R.string.action_undo)
     // Formatted through the Context because LaunchedEffect is not a composable scope.
     val context = LocalContext.current
 
     // Undo lives here rather than in the row so it survives the row leaving the list.
-    LaunchedEffect(lastFinished) {
-        val finished = lastFinished ?: return@LaunchedEffect
+    LaunchedEffect(lastConsumption) {
+        val logged = lastConsumption ?: return@LaunchedEffect
+        val message = if (logged.finished) {
+            context.getString(R.string.inventory_finished, logged.name)
+        } else {
+            context.getString(R.string.inventory_logged_use, logged.name)
+        }
         val result = snackbarHostState.showSnackbar(
-            message = context.getString(R.string.inventory_finished, finished.name),
+            message = message,
             actionLabel = undoLabel,
             duration = SnackbarDuration.Short
         )
-        if (result == SnackbarResult.ActionPerformed) viewModel.undoFinish() else viewModel.clearUndo()
+        if (result == SnackbarResult.ActionPerformed) {
+            viewModel.undoConsumption()
+        } else {
+            viewModel.clearUndo()
+        }
     }
 
     Scaffold(
@@ -336,8 +345,10 @@ private fun ItemRow(
  * at a glance is how many of the thing are left, and the name already says what the thing is.
  *
  * Both buttons report something that happened in the kitchen rather than editing a number:
- * + is "bought another", − is "ate one". So − runs all the way to zero, where it finishes
- * the row as eaten — the same outcome as ✓, undo included.
+ * + is "bought another", − is "ate one". Every − writes a dated line into the consumption
+ * log, whether or not it empties the row, and runs all the way to zero, where it finishes
+ * the row as eaten — the same outcome as ✓, undo included. Correcting a count that was
+ * simply wrong is the edit screen's job; that path logs nothing.
  */
 @Composable
 private fun QuantityStepper(

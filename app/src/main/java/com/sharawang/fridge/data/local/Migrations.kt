@@ -51,7 +51,65 @@ val MIGRATION_1_2: Migration = object : Migration(1, 2) {
 }
 
 /**
+ * Version 3 adds `consumption_events`: the log of what actually left the kitchen.
+ *
+ * Until now the only record was `finishedOn` / `finishedReason` on the item row, which can
+ * only describe a row that is gone. Eating two of three eggs wrote nothing, so history and
+ * the waste report were blind to every partial use — the common case.
+ *
+ * The table is backfilled from rows that are already finished so the history screen is not
+ * empty on the first launch after upgrading. Those rows carry `recordedAt = 0` (no clock
+ * time was ever recorded for them) and keep a null reason where the old row had none, so a
+ * pre-v2 finish stays "unknown" instead of being counted as eaten.
+ *
+ * The backfill's quantity is the quantity the row held when it was finished. That is all the
+ * old schema knew; any amount used before that point is genuinely unrecoverable.
+ */
+val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // Written to match Room's generated schema exactly — a column type or nullability
+        // that differs here fails validation on open, on the user's phone, at launch.
+        db.execSQL(
+            """
+            CREATE TABLE IF NOT EXISTS `consumption_events` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `itemId` INTEGER,
+                `name` TEXT NOT NULL,
+                `category` TEXT NOT NULL,
+                `storageArea` TEXT NOT NULL,
+                `store` TEXT NOT NULL,
+                `quantity` REAL NOT NULL,
+                `reason` TEXT,
+                `occurredOn` TEXT NOT NULL,
+                `recordedAt` INTEGER NOT NULL,
+                `valueCents` INTEGER
+            )
+            """
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_consumption_events_occurredOn` " +
+                "ON `consumption_events` (`occurredOn`)"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_consumption_events_itemId` " +
+                "ON `consumption_events` (`itemId`)"
+        )
+        db.execSQL(
+            """
+            INSERT INTO consumption_events
+                (itemId, name, category, storageArea, store, quantity, reason,
+                 occurredOn, recordedAt, valueCents)
+            SELECT id, name, category, storageArea, store, quantity, finishedReason,
+                   finishedOn, 0, priceCents
+            FROM food_items
+            WHERE finishedOn IS NOT NULL
+            """
+        )
+    }
+}
+
+/**
  * Every migration ever written, in order. Room needs the whole chain so a device two
  * versions behind can still upgrade in a single pass.
  */
-val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2)
+val ALL_MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3)

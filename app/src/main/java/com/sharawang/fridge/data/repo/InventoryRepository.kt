@@ -1,9 +1,12 @@
 package com.sharawang.fridge.data.repo
 
 import com.sharawang.fridge.data.ShelfLife
+import com.sharawang.fridge.data.local.ConsumptionEvent
+import com.sharawang.fridge.data.local.ConsumptionEventDao
 import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.FoodItemDao
+import com.sharawang.fridge.data.local.isFinished
 import com.sharawang.fridge.data.local.Purchase
 import com.sharawang.fridge.data.local.PurchaseDao
 import com.sharawang.fridge.data.local.PurchaseLine
@@ -14,6 +17,7 @@ import com.sharawang.fridge.receipt.ParsedReceipt
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import kotlin.math.roundToInt
 
 /**
  * A receipt line the user has approved, after any edits made on the review screen.
@@ -39,7 +43,8 @@ sealed interface MergeOutcome {
 /** Single entry point to the local database. No network, ever. */
 class InventoryRepository(
     private val foodItemDao: FoodItemDao,
-    private val purchaseDao: PurchaseDao
+    private val purchaseDao: PurchaseDao,
+    private val consumptionEventDao: ConsumptionEventDao
 ) {
 
     fun activeItems(): Flow<List<FoodItem>> = foodItemDao.observeActive()
@@ -48,11 +53,15 @@ class InventoryRepository(
 
     fun search(query: String): Flow<List<FoodItem>> = foodItemDao.search(query)
 
-    fun history(): Flow<List<FoodItem>> = foodItemDao.observeHistory()
+    /**
+     * What left the kitchen, newest first — every − tap and every ✓, not just the taps that
+     * happened to empty a row.
+     */
+    fun history(): Flow<List<ConsumptionEvent>> = consumptionEventDao.observeRecent()
 
-    /** Waste report over the last [days] days. */
+    /** Waste report over the last [days] days, measured in what was consumed. */
     fun wasteReport(days: Long = 30): Flow<WasteReport> =
-        foodItemDao.observeFinishedSince(LocalDate.now().minusDays(days))
+        consumptionEventDao.observeSince(LocalDate.now().minusDays(days))
             .map(WasteReport::from)
 
     fun recentPurchases(): Flow<List<Purchase>> = purchaseDao.observeRecent()
@@ -73,18 +82,45 @@ class InventoryRepository(
 
     suspend fun delete(item: FoodItem) = foodItemDao.delete(item)
 
+    /**
+     * Clears the row out, logging whatever was still on it as eaten or binned.
+     *
+     * @return the id of the logged event, for undo. Null if there was nothing to finish —
+     * a row already gone, or a second ✓ on the same one, which must not log twice and
+     * quietly double what the waste report thinks left the kitchen.
+     */
     suspend fun markFinished(
         id: Long,
         reason: FinishReason,
         on: LocalDate = LocalDate.now()
-    ) = foodItemDao.markFinished(id, on, reason)
+    ): Long? {
+        val item = foodItemDao.getById(id) ?: return null
+        if (item.isFinished) return null
+        val eventId = record(item, item.quantity, reason, on)
+        foodItemDao.markFinished(id, on, reason)
+        return eventId
+    }
 
     /**
-     * Undo. [quantity] is restored explicitly because finishing an item can happen after it
-     * was partially used, and putting it back with the wrong amount is worse than not
-     * offering undo at all.
+     * Undoes one logged event: the amount goes back on the row and the event is deleted
+     * rather than cancelled out. A log the user has to read as a running balance of
+     * mistakes is worse than no log.
+     *
+     * The quantity comes off the event, not off the item, because finishing can happen
+     * after a partial use and putting back the original amount would quietly invent food.
      */
-    suspend fun restore(id: Long, quantity: Double) = foodItemDao.restore(id, quantity)
+    suspend fun undoConsumption(eventId: Long) {
+        val event = consumptionEventDao.getById(eventId) ?: return
+        val item = event.itemId?.let { foodItemDao.getById(it) }
+        if (item != null) {
+            if (item.isFinished) {
+                foodItemDao.restore(item.id, event.quantity)
+            } else {
+                foodItemDao.updateQuantity(item.id, item.quantity + event.quantity)
+            }
+        }
+        consumptionEventDao.deleteById(eventId)
+    }
 
     /**
      * You bought another one. Not a correction — a purchase — so the purchase date moves to
@@ -105,10 +141,17 @@ class InventoryRepository(
     /** Full table, finished rows included. Backup export reads through this. */
     suspend fun allItems(): List<FoodItem> = foodItemDao.getAll()
 
-    /** Restores a backup wholesale. Only reached behind an explicit confirmation. */
-    suspend fun replaceAll(items: List<FoodItem>) {
+    /**
+     * Restores a backup wholesale. Only reached behind an explicit confirmation.
+     *
+     * The log is cleared alongside the items: leaving it would attach the old kitchen's
+     * history to the new one, and its itemIds would point at rows that no longer exist.
+     */
+    suspend fun replaceAll(items: List<FoodItem>, events: List<ConsumptionEvent> = emptyList()) {
         foodItemDao.deleteAll()
+        consumptionEventDao.deleteAll()
         foodItemDao.insertAll(items)
+        consumptionEventDao.insertAll(events)
     }
 
     suspend fun insertAll(items: List<FoodItem>) {
@@ -118,14 +161,69 @@ class InventoryRepository(
     /**
      * Consumes [amount] of an item. Hitting zero (or below, from a sloppy tap) finishes the
      * row as USED rather than leaving a phantom 0-quantity item in the list.
+     *
+     * Every call logs, including the ones that leave food behind: eating two of three eggs
+     * is the ordinary case, and it used to vanish because only an emptied row was recorded.
+     * The logged amount is clamped to what was actually there, so overshooting the count
+     * cannot report more food than the kitchen held.
+     *
+     * @return the id of the logged event, for undo.
      */
-    suspend fun useAmount(item: FoodItem, amount: Double) {
+    suspend fun useAmount(
+        item: FoodItem,
+        amount: Double,
+        on: LocalDate = LocalDate.now()
+    ): Long {
+        val consumed = minOf(amount, item.quantity)
+        val eventId = record(item, consumed, FinishReason.USED, on)
         val remaining = item.quantity - amount
         if (remaining > 0.0001) {
             foodItemDao.updateQuantity(item.id, remaining)
         } else {
-            foodItemDao.markFinished(item.id, LocalDate.now(), FinishReason.USED)
+            foodItemDao.markFinished(item.id, on, FinishReason.USED)
         }
+        return eventId
+    }
+
+    /** Snapshots the item into the log. See [ConsumptionEvent] for why it is a snapshot. */
+    private suspend fun record(
+        item: FoodItem,
+        quantity: Double,
+        reason: FinishReason,
+        on: LocalDate
+    ): Long = consumptionEventDao.insert(
+        ConsumptionEvent(
+            itemId = item.id,
+            name = item.name,
+            category = item.category,
+            storageArea = item.storageArea,
+            store = item.store,
+            quantity = quantity,
+            reason = reason,
+            occurredOn = on,
+            recordedAt = System.currentTimeMillis(),
+            valueCents = shareOfPrice(item.priceCents, item.quantity, quantity)
+        )
+    )
+
+    /**
+     * What [part] of a row costing [priceCents] for [whole] units is worth.
+     *
+     * Rough by nature — the row's price is the whole receipt line, and buying another one
+     * later adds a unit without adding to it. Good enough to answer "roughly how much did
+     * we throw away", which is the only question the number is used for.
+     */
+    private fun shareOfPrice(priceCents: Int?, whole: Double, part: Double): Int? = when {
+        priceCents == null -> null
+        whole <= 0.0001 -> priceCents
+        else -> (priceCents * (part.coerceAtMost(whole) / whole)).roundToInt()
+    }
+
+    /** Everything ever logged. Backup export reads through this. */
+    suspend fun allEvents(): List<ConsumptionEvent> = consumptionEventDao.getAll()
+
+    suspend fun insertAllEvents(events: List<ConsumptionEvent>) {
+        consumptionEventDao.insertAll(events)
     }
 
     /**

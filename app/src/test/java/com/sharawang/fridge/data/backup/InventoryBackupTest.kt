@@ -1,5 +1,6 @@
 package com.sharawang.fridge.data.backup
 
+import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodCategory
 import com.sharawang.fridge.data.local.FoodItem
@@ -124,5 +125,75 @@ class InventoryBackupTest {
         """.trimIndent()
 
         assertEquals(listOf("Tofu"), InventoryBackup.decode(json).map { it.name })
+    }
+
+    // ---- the consumption log ------------------------------------------------
+
+    private val events = listOf(
+        ConsumptionEvent(
+            id = 3,
+            itemId = 7,
+            name = "Bok Choy",
+            category = FoodCategory.VEGETABLES,
+            storageArea = StorageArea.FRIDGE,
+            store = Store.TT,
+            quantity = 0.5,
+            reason = FinishReason.USED,
+            occurredOn = today.minusDays(1),
+            recordedAt = 1_700_000_000_000L,
+            valueCents = 87
+        ),
+        ConsumptionEvent(
+            id = 4,
+            name = "Legacy row",
+            reason = null,
+            occurredOn = today.minusDays(5)
+        )
+    )
+
+    @Test
+    fun `the consumption log survives a round trip`() {
+        val restored = InventoryBackup.decodeEvents(
+            InventoryBackup.encode(items, today, events)
+        )
+
+        assertEquals(2, restored.size)
+        val first = restored.first()
+        assertEquals("Bok Choy", first.name)
+        assertEquals(0.5, first.quantity, 0.0001)
+        assertEquals(FinishReason.USED, first.reason)
+        assertEquals(today.minusDays(1), first.occurredOn)
+        assertEquals(1_700_000_000_000L, first.recordedAt)
+        assertEquals(87, first.valueCents)
+        assertEquals(FoodCategory.VEGETABLES, first.category)
+        assertEquals(Store.TT, first.store)
+    }
+
+    @Test
+    fun `an entry with no recorded reason stays unknown through a round trip`() {
+        val restored = InventoryBackup.decodeEvents(
+            InventoryBackup.encode(items, today, events)
+        )
+
+        assertNull(restored[1].reason)
+        assertNull(restored[1].valueCents)
+    }
+
+    @Test
+    fun `item ids are not carried across, so undo cannot reach for a stranger's row`() {
+        val restored = InventoryBackup.decodeEvents(
+            InventoryBackup.encode(items, today, events)
+        )
+
+        assertTrue(restored.all { it.itemId == null && it.id == 0L })
+    }
+
+    @Test
+    fun `a version 1 file has no log rather than failing to import`() {
+        val json = """
+            {"format":"fridge-inventory","version":1,"items":[]}
+        """.trimIndent()
+
+        assertTrue(InventoryBackup.decodeEvents(json).isEmpty())
     }
 }

@@ -37,7 +37,11 @@ class InventoryRepositoryTest {
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java
         ).allowMainThreadQueries().build()
-        repository = InventoryRepository(database.foodItemDao(), database.purchaseDao())
+        repository = InventoryRepository(
+            database.foodItemDao(),
+            database.purchaseDao(),
+            database.consumptionEventDao()
+        )
     }
 
     @After
@@ -238,7 +242,7 @@ class InventoryRepositoryTest {
     // ---- waste report -------------------------------------------------------
 
     @Test
-    fun `the waste report reads from what was actually finished`() = runTest {
+    fun `the waste report reads from what was actually consumed`() = runTest {
         val eaten = repository.save(repository.draftFor("Milk")).id
         val binned = repository.save(
             repository.draftFor("Spinach", priceCents = 499)
@@ -248,9 +252,131 @@ class InventoryRepositoryTest {
         repository.markFinished(binned, FinishReason.DISCARDED)
 
         val report = repository.wasteReport().first()
-        assertEquals(1, report.usedCount)
-        assertEquals(1, report.discardedCount)
+        assertEquals(1.0, report.usedQuantity, 0.0001)
+        assertEquals(1.0, report.discardedQuantity, 0.0001)
         assertEquals(499, report.discardedCents)
         assertEquals(50, report.wastePercent)
+    }
+
+    // ---- the consumption log ------------------------------------------------
+
+    @Test
+    fun `using part of an item is recorded, not just deducted`() = runTest {
+        val id = repository.save(repository.draftFor("Eggs").copy(quantity = 3.0)).id
+
+        repository.useAmount(repository.item(id)!!, 1.0)
+
+        val logged = repository.history().first().single()
+        assertEquals("Eggs", logged.name)
+        assertEquals(1.0, logged.quantity, 0.0001)
+        assertEquals(FinishReason.USED, logged.reason)
+        assertEquals(id, logged.itemId)
+        // The row is still in the kitchen with the rest of it.
+        assertEquals(2.0, repository.item(id)!!.quantity, 0.0001)
+    }
+
+    @Test
+    fun `every tap is its own entry, so the log reads as what happened`() = runTest {
+        val id = repository.save(repository.draftFor("Eggs").copy(quantity = 3.0)).id
+        repository.useAmount(repository.item(id)!!, 1.0)
+        repository.useAmount(repository.item(id)!!, 1.0)
+
+        assertEquals(2, repository.history().first().size)
+        assertEquals(2.0, repository.wasteReport().first().usedQuantity, 0.0001)
+    }
+
+    @Test
+    fun `overshooting the quantity does not log food the kitchen never had`() = runTest {
+        val id = repository.save(repository.draftFor("Herbs").copy(quantity = 1.0)).id
+
+        repository.useAmount(repository.item(id)!!, 5.0)
+
+        assertEquals(1.0, repository.history().first().single().quantity, 0.0001)
+    }
+
+    @Test
+    fun `an entry keeps the price of the share that was consumed`() = runTest {
+        val id = repository.save(
+            repository.draftFor("Pork Belly", priceCents = 400).copy(quantity = 2.0)
+        ).id
+
+        repository.useAmount(repository.item(id)!!, 0.5)
+
+        assertEquals(100, repository.history().first().single().valueCents)
+    }
+
+    @Test
+    fun `finishing a partly used row logs only what was left on it`() = runTest {
+        val id = repository.save(repository.draftFor("Milk").copy(quantity = 2.0)).id
+        repository.useAmount(repository.item(id)!!, 1.0)
+
+        repository.markFinished(id, FinishReason.DISCARDED)
+
+        val report = repository.wasteReport().first()
+        assertEquals(1.0, report.usedQuantity, 0.0001)
+        assertEquals(1.0, report.discardedQuantity, 0.0001)
+    }
+
+    @Test
+    fun `the log keeps what the food was, even after the item is renamed`() = runTest {
+        val id = repository.save(repository.draftFor("Bok Choy").copy(quantity = 2.0)).id
+        repository.useAmount(repository.item(id)!!, 1.0)
+
+        repository.save(repository.item(id)!!.copy(name = "Baby Bok Choy"))
+
+        assertEquals("Bok Choy", repository.history().first().single().name)
+    }
+
+    @Test
+    fun `undo takes the entry back out and puts the amount back on the row`() = runTest {
+        val id = repository.save(repository.draftFor("Eggs").copy(quantity = 3.0)).id
+        val eventId = repository.useAmount(repository.item(id)!!, 1.0)
+
+        repository.undoConsumption(eventId)
+
+        assertEquals(3.0, repository.item(id)!!.quantity, 0.0001)
+        assertTrue(repository.history().first().isEmpty())
+    }
+
+    @Test
+    fun `undoing the tap that emptied a row brings the row back`() = runTest {
+        val id = repository.save(repository.draftFor("Milk").copy(quantity = 1.0)).id
+        val eventId = repository.useAmount(repository.item(id)!!, 1.0)
+        assertTrue(repository.activeItems().first().isEmpty())
+
+        repository.undoConsumption(eventId)
+
+        assertNull(repository.item(id)!!.finishedOn)
+        assertEquals(1.0, repository.item(id)!!.quantity, 0.0001)
+    }
+
+    @Test
+    fun `undo after a partial use puts back only what that entry took`() = runTest {
+        val id = repository.save(repository.draftFor("Milk").copy(quantity = 2.0)).id
+        repository.useAmount(repository.item(id)!!, 1.0)
+        val finishEvent = repository.markFinished(id, FinishReason.DISCARDED)!!
+
+        repository.undoConsumption(finishEvent)
+
+        // Back on the shelf with the one that was left, not the two it was bought with.
+        assertEquals(1.0, repository.item(id)!!.quantity, 0.0001)
+    }
+
+    @Test
+    fun `finishing a row twice does not log it twice`() = runTest {
+        val id = repository.save(repository.draftFor("Milk")).id
+        repository.markFinished(id, FinishReason.DISCARDED)
+
+        assertNull(repository.markFinished(id, FinishReason.DISCARDED))
+        assertEquals(1, repository.history().first().size)
+    }
+
+    @Test
+    fun `correcting a wrong count on the edit screen logs nothing`() = runTest {
+        val id = repository.save(repository.draftFor("Rice").copy(quantity = 3.0)).id
+
+        repository.save(repository.item(id)!!.copy(quantity = 2.0))
+
+        assertTrue(repository.history().first().isEmpty())
     }
 }

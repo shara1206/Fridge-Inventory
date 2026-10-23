@@ -47,6 +47,9 @@ is on the roadmap but deliberately not the current focus.
   zones still print, ruled, so they can be filled in by hand
 - Two outcomes when something leaves the kitchen — eaten or thrown out — feeding a waste
   report (how much you binned, which categories, which store), with undo on every removal
+- **A consumption log**: every − and every ✓ writes a dated entry with the amount, so the
+  history screen answers "what did we get through" and not merely "what disappeared". Undo
+  removes the entry rather than logging an opposite one
 - Partial use: knock 0.25 / 0.5 / 1 off an item instead of only finishing the whole thing
 - Repeat purchases merge into the row that is already there rather than piling up duplicates
 - Receipt scanning: photograph or pick an image, review the parsed lines, uncheck the junk, add the rest
@@ -201,6 +204,9 @@ Enum *names* are the persisted database values, so renaming a `FoodCategory` con
 schema change. `MIGRATION_1_2` is exactly that: it remaps the old coarse categories
 (`PRODUCE`, `MEAT_SEAFOOD`, `FROZEN`, `DRY_GOODS`), parks anything unrecognised in `OTHER`
 rather than letting the enum converter crash on read, and adds the `finishedReason` column.
+`MIGRATION_2_3` creates `consumption_events` and backfills it from rows that are already
+finished, so the history screen is not empty on the first launch after upgrading; a finish
+with no recorded reason stays unknown there rather than being counted as eaten.
 There is no `fallbackToDestructiveMigration` — a missing migration should fail loudly in
 development, not silently wipe someone's kitchen.
 
@@ -211,10 +217,20 @@ development, not silently wipe someone's kitchen.
 | `food_items`     | One row per thing in the kitchen. `finishedOn IS NULL` = still here. |
 | `purchases`      | One shopping trip, including the raw OCR text and photo path. |
 | `purchase_lines` | Every parsed receipt line, accepted or not — the parser's audit trail. |
+| `consumption_events` | One row per − tap and per ✓: what left the kitchen, when, how much. |
 
 Money is stored as integer cents. Dates are `LocalDate` stored as ISO strings.
 `finishedReason` distinguishes eaten from thrown out — without it a waste report could only
 report that food vanished.
+
+`consumption_events` exists because `finishedOn` can only describe a row that is *gone*.
+Eating two of three eggs — the ordinary case — lowered a count and recorded nothing, so
+history and the waste report were blind to it. Each entry snapshots the item's name,
+category, area and store rather than joining back to `food_items`: history is a statement
+about what happened, and renaming or clearing out an item later must not rewrite it. The
+`itemId` is kept only so undo can find the row to put back, and is allowed to dangle. The
+waste report therefore measures **quantity consumed**, not rows finished, so half a pack
+thrown out no longer weighs the same as a whole one.
 
 ## Roadmap
 

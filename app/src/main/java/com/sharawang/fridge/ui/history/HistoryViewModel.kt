@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.sharawang.fridge.AppContainer
-import com.sharawang.fridge.data.local.FoodItem
+import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.repo.InventoryRepository
 import com.sharawang.fridge.data.repo.WasteReport
 import kotlinx.coroutines.flow.SharingStarted
@@ -14,20 +14,24 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class HistoryUiState(
-    val items: List<FoodItem> = emptyList(),
+    /** The consumption log, newest first — one line per − tap and per ✓. */
+    val events: List<ConsumptionEvent> = emptyList(),
     val report: WasteReport = WasteReport()
 )
 
 class HistoryViewModel(private val repository: InventoryRepository) : ViewModel() {
 
     val uiState: StateFlow<HistoryUiState> =
-        combine(repository.history(), repository.wasteReport()) { items, report ->
-            HistoryUiState(items = items, report = report)
+        combine(repository.history(), repository.wasteReport()) { events, report ->
+            HistoryUiState(events = events, report = report)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HistoryUiState())
 
-    /** Puts an item back with the quantity it had when it was removed. */
-    fun restore(item: FoodItem) = viewModelScope.launch {
-        repository.restore(item.id, item.quantity)
+    /**
+     * Takes one entry back out of the log and puts its quantity back on the item — whether
+     * that means un-finishing the row or just adding to a count that is still there.
+     */
+    fun undo(event: ConsumptionEvent) = viewModelScope.launch {
+        repository.undoConsumption(event.id)
     }
 
     companion object {

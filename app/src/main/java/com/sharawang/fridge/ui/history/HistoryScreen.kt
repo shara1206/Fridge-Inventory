@@ -30,7 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sharawang.fridge.R
-import com.sharawang.fridge.data.local.FoodItem
+import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.repo.WasteReport
 import com.sharawang.fridge.ui.theme.LocalExpiryColors
 
@@ -63,19 +63,25 @@ fun HistoryScreen(viewModel: HistoryViewModel, onDone: () -> Unit) {
             WasteSummary(state.report)
             HorizontalDivider()
 
-            if (state.items.isEmpty()) {
-                Text(
-                    stringResource(R.string.history_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(24.dp)
-                )
+            if (state.events.isEmpty()) {
+                Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        stringResource(R.string.history_empty),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        stringResource(R.string.history_hint),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             } else {
                 LazyColumn(
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(state.items, key = { it.id }) { item ->
-                        HistoryRow(item = item, onRestore = { viewModel.restore(item) })
+                    items(state.events, key = { it.id }) { event ->
+                        HistoryRow(event = event, onUndo = { viewModel.undo(event) })
                     }
                 }
             }
@@ -97,8 +103,8 @@ private fun WasteSummary(report: WasteReport) {
         )
         Text(
             listOf(
-                stringResource(R.string.waste_eaten, report.usedCount),
-                stringResource(R.string.waste_thrown, report.discardedCount)
+                stringResource(R.string.waste_eaten, trim(report.usedQuantity)),
+                stringResource(R.string.waste_thrown, trim(report.discardedQuantity))
             ).joinToString(" · "),
             style = MaterialTheme.typography.bodyMedium
         )
@@ -127,10 +133,10 @@ private fun WasteSummary(report: WasteReport) {
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 6.dp)
             )
-            report.discardedByCategory.take(4).forEach { (category, count) ->
+            report.discardedByCategory.take(4).forEach { (category, quantity) ->
                 Text(
                     stringResource(category.labelRes) + "  " +
-                        stringResource(R.string.waste_count_suffix, count),
+                        stringResource(R.string.waste_count_suffix, trim(quantity)),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -143,9 +149,10 @@ private fun WasteSummary(report: WasteReport) {
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 6.dp)
             )
-            report.discardedByStore.take(4).forEach { (store, count) ->
+            report.discardedByStore.take(4).forEach { (store, quantity) ->
                 Text(
-                    store.label + "  " + stringResource(R.string.waste_count_suffix, count),
+                    store.label + "  " +
+                        stringResource(R.string.waste_count_suffix, trim(quantity)),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -153,25 +160,37 @@ private fun WasteSummary(report: WasteReport) {
     }
 }
 
+/**
+ * One line of the log: what left, when, how much, and whether it was eaten or binned.
+ *
+ * Undo removes the entry rather than logging an opposite one — the log is meant to be read
+ * as what happened, not reconciled as a ledger.
+ */
 @Composable
-private fun HistoryRow(item: FoodItem, onRestore: () -> Unit) {
+private fun HistoryRow(event: ConsumptionEvent, onUndo: () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth().padding(start = 12.dp, top = 8.dp, bottom = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(Modifier.weight(1f)) {
-                Text(item.name, style = MaterialTheme.typography.titleSmall)
+                Text(
+                    event.name + "  " + stringResource(
+                        R.string.waste_count_suffix,
+                        trim(event.quantity)
+                    ),
+                    style = MaterialTheme.typography.titleSmall
+                )
                 Text(
                     listOfNotNull(
-                        item.finishedOn?.toString(),
-                        item.finishedReason?.let { stringResource(it.labelRes) },
-                        stringResource(item.category.labelRes)
+                        event.occurredOn.toString(),
+                        event.reason?.let { stringResource(it.labelRes) },
+                        stringResource(event.category.labelRes)
                     ).joinToString(" · "),
                     style = MaterialTheme.typography.labelMedium
                 )
             }
-            IconButton(onClick = onRestore) {
+            IconButton(onClick = onUndo) {
                 Icon(
                     Icons.Filled.Undo,
                     contentDescription = stringResource(R.string.action_restore)
@@ -180,5 +199,9 @@ private fun HistoryRow(item: FoodItem, onRestore: () -> Unit) {
         }
     }
 }
+
+/** Bare counts read better than "2.0", and halves still need to show as "0.5". */
+private fun trim(value: Double): String =
+    if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
 
 private fun money(cents: Int): String = "%.2f".format(cents / 100.0)

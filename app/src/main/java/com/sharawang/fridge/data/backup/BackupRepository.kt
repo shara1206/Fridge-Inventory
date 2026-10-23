@@ -2,6 +2,7 @@ package com.sharawang.fridge.data.backup
 
 import android.content.Context
 import android.net.Uri
+import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.isFinished
 import com.sharawang.fridge.data.repo.InventoryRepository
@@ -32,10 +33,10 @@ class BackupRepository(
     /** Suggested filename; the user can rename it in the system picker. */
     fun suggestedFileName(today: LocalDate = LocalDate.now()): String = "fridge-inventory-$today.json"
 
-    /** @return how many rows were written. */
+    /** @return how many item rows were written. The consumption log rides along. */
     suspend fun exportTo(uri: Uri): Int = withContext(Dispatchers.IO) {
         val items = repository.allItems()
-        val text = InventoryBackup.encode(items)
+        val text = InventoryBackup.encode(items, events = repository.allEvents())
         context.contentResolver.openOutputStream(uri, "wt")?.use { stream ->
             stream.write(text.toByteArray())
         } ?: throw BackupFormatException("Could not open that file for writing")
@@ -49,9 +50,10 @@ class BackupRepository(
         } ?: throw BackupFormatException("Could not open that file")
 
         val items = InventoryBackup.decode(text)
+        val events = InventoryBackup.decodeEvents(text)
         when (mode) {
-            ImportMode.REPLACE -> repository.replaceAll(items)
-            ImportMode.MERGE -> merge(items)
+            ImportMode.REPLACE -> repository.replaceAll(items, events)
+            ImportMode.MERGE -> merge(items, events)
         }
         items.size
     }
@@ -61,9 +63,13 @@ class BackupRepository(
      * Live rows go through the same merge path as a repeat purchase, so importing a backup
      * onto a kitchen that already has spinach in it reads as "2 spinach", not two lines.
      */
-    private suspend fun merge(items: List<FoodItem>) {
+    private suspend fun merge(items: List<FoodItem>, events: List<ConsumptionEvent>) {
         val (history, live) = items.partition { it.isFinished }
         if (history.isNotEmpty()) repository.insertAll(history)
         live.forEach { repository.addOrMerge(it) }
+        // Log entries are appended for the same reason: they are dated statements about the
+        // past. Importing the same file twice will duplicate them, which is the honest
+        // failure — silently discarding entries would lose a kitchen's history.
+        if (events.isNotEmpty()) repository.insertAllEvents(events)
     }
 }

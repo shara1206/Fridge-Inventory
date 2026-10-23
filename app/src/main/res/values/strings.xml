@@ -50,6 +50,7 @@
     <string name="inventory_summary_expired">%1$d expired</string>
     <string name="inventory_summary_due">%1$d due soon</string>
     <string name="inventory_finished">Removed %1$s</string>
+    <string name="inventory_logged_use">Used 1 %1$s</string>
     <string name="expiry_over">%1$dd over</string>
     <string name="expiry_today">today</string>
     <string name="expiry_days">%1$dd</string>
@@ -121,15 +122,16 @@
     <!-- History and waste -->
     <string name="title_history">History</string>
     <string name="history_empty">Nothing has left the kitchen yet.</string>
+    <string name="history_hint">Every − and ✓ on the list is logged here.</string>
     <string name="waste_window">Last 30 days</string>
-    <string name="waste_eaten">%1$d eaten</string>
-    <string name="waste_thrown">%1$d thrown out</string>
+    <string name="waste_eaten">%1$s eaten</string>
+    <string name="waste_thrown">%1$s thrown out</string>
     <string name="waste_percent">%1$d%% wasted</string>
     <string name="waste_percent_none">not enough data yet</string>
     <string name="waste_money">%1$s thrown away</string>
     <string name="waste_by_category">Most wasted categories</string>
     <string name="waste_by_store">By store</string>
-    <string name="waste_count_suffix">× %1$d</string>
+    <string name="waste_count_suffix">× %1$s</string>
 
     <!-- Notifications -->
     <string name="notif_channel_name">Expiry reminders</string>

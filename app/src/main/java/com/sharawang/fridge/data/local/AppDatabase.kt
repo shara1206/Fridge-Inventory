@@ -7,8 +7,13 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [FoodItem::class, Purchase::class, PurchaseLine::class],
-    version = 2,
+    entities = [
+        FoodItem::class,
+        Purchase::class,
+        PurchaseLine::class,
+        ConsumptionEvent::class
+    ],
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -16,6 +21,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun foodItemDao(): FoodItemDao
     abstract fun purchaseDao(): PurchaseDao
+
+    abstract fun consumptionEventDao(): ConsumptionEventDao
 
     companion object {
         @Volatile

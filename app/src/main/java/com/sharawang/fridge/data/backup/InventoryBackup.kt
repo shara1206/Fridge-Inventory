@@ -1,5 +1,6 @@
 package com.sharawang.fridge.data.backup
 
+import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodCategory
 import com.sharawang.fridge.data.local.FoodItem
@@ -25,9 +26,18 @@ class BackupFormatException(message: String) : Exception(message)
 object InventoryBackup {
 
     const val FORMAT = "fridge-inventory"
-    const val VERSION = 1
 
-    fun encode(items: List<FoodItem>, exportedOn: LocalDate = LocalDate.now()): String {
+    /**
+     * 2 added `events`, the consumption log. A version 1 file still reads: it simply has no
+     * log, which is exactly true of the app that wrote it.
+     */
+    const val VERSION = 2
+
+    fun encode(
+        items: List<FoodItem>,
+        exportedOn: LocalDate = LocalDate.now(),
+        events: List<ConsumptionEvent> = emptyList()
+    ): String {
         val array = JSONArray()
         items.forEach { item ->
             array.put(
@@ -47,12 +57,72 @@ object InventoryBackup {
                 }
             )
         }
+        val eventArray = JSONArray()
+        events.forEach { event ->
+            eventArray.put(
+                JSONObject().apply {
+                    put("name", event.name)
+                    put("category", event.category.name)
+                    put("storageArea", event.storageArea.name)
+                    put("store", event.store.name)
+                    put("quantity", event.quantity)
+                    put("reason", event.reason?.name ?: JSONObject.NULL)
+                    put("occurredOn", event.occurredOn.toString())
+                    put("recordedAt", event.recordedAt)
+                    put("valueCents", event.valueCents ?: JSONObject.NULL)
+                }
+            )
+        }
+
         return JSONObject().apply {
             put("format", FORMAT)
             put("version", VERSION)
             put("exportedOn", exportedOn.toString())
             put("items", array)
+            put("events", eventArray)
         }.toString(2)
+    }
+
+    /**
+     * The consumption log out of a backup file. Empty for a version 1 file, and for any
+     * file written before the log existed.
+     *
+     * `itemId` is deliberately dropped: it pointed at a row id in the database that wrote
+     * the file, and carrying it across would make undo reach for someone else's item. The
+     * entries keep their own snapshot of what the food was, which is what history reads.
+     */
+    fun decodeEvents(text: String): List<ConsumptionEvent> {
+        val root = try {
+            JSONObject(text)
+        } catch (e: Exception) {
+            throw BackupFormatException("Not a JSON document: ${e.message}")
+        }
+        if (root.optString("format") != FORMAT) {
+            throw BackupFormatException("Not a $FORMAT backup")
+        }
+        val array = root.optJSONArray("events") ?: return emptyList()
+
+        return (0 until array.length()).mapNotNull { index ->
+            val json = array.optJSONObject(index) ?: return@mapNotNull null
+            val name = json.optString("name").trim()
+            if (name.isEmpty()) return@mapNotNull null
+            ConsumptionEvent(
+                itemId = null,
+                name = name,
+                category = json.enum("category", FoodCategory.entries, FoodCategory.OTHER),
+                storageArea = json.enum("storageArea", StorageArea.entries, StorageArea.FRIDGE),
+                store = json.enum("store", Store.entries, Store.OTHER),
+                quantity = json.optDouble("quantity", 1.0).takeIf { it > 0 } ?: 1.0,
+                reason = if (json.isNull("reason")) {
+                    null
+                } else {
+                    json.enum("reason", FinishReason.entries, FinishReason.USED)
+                },
+                occurredOn = json.date("occurredOn") ?: LocalDate.now(),
+                recordedAt = json.optLong("recordedAt", 0L),
+                valueCents = if (json.isNull("valueCents")) null else json.optInt("valueCents")
+            )
+        }
     }
 
     /**

@@ -45,6 +45,7 @@
     <string name="inventory_summary_expired">%1$d 已过期</string>
     <string name="inventory_summary_due">%1$d 快到期</string>
     <string name="inventory_finished">已移除 %1$s</string>
+    <string name="inventory_logged_use">已记录：用掉 1 个%1$s</string>
     <string name="expiry_over">过期 %1$d 天</string>
     <string name="expiry_today">今天</string>
     <string name="expiry_days">%1$d 天</string>
@@ -112,15 +113,16 @@
 
     <string name="title_history">历史</string>
     <string name="history_empty">还没有东西离开厨房。</string>
+    <string name="history_hint">列表上每次按 − 或 ✓ 都会记录在这里。</string>
     <string name="waste_window">最近 30 天</string>
-    <string name="waste_eaten">吃掉 %1$d</string>
-    <string name="waste_thrown">扔掉 %1$d</string>
+    <string name="waste_eaten">吃掉 %1$s</string>
+    <string name="waste_thrown">扔掉 %1$s</string>
     <string name="waste_percent">浪费 %1$d%%</string>
     <string name="waste_percent_none">数据还不够</string>
     <string name="waste_money">扔掉了 %1$s</string>
     <string name="waste_by_category">最常扔掉的分类</string>
     <string name="waste_by_store">按店铺</string>
-    <string name="waste_count_suffix">× %1$d</string>
+    <string name="waste_count_suffix">× %1$s</string>
 
     <string name="notif_channel_name">过期提醒</string>
     <string name="notif_channel_desc">每天汇总快要坏掉的食物。</string>

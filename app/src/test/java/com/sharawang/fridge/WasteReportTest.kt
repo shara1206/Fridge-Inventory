@@ -1,8 +1,8 @@
 package com.sharawang.fridge
 
+import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodCategory
-import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.data.repo.WasteReport
 import org.junit.Assert.assertEquals
@@ -12,26 +12,29 @@ import java.time.LocalDate
 
 class WasteReportTest {
 
-    private fun finished(
+    private fun event(
         name: String,
         reason: FinishReason?,
+        quantity: Double = 1.0,
         category: FoodCategory = FoodCategory.VEGETABLES,
         store: Store = Store.HMART,
-        priceCents: Int? = null
-    ) = FoodItem(
+        valueCents: Int? = null
+    ) = ConsumptionEvent(
         id = name.hashCode().toLong(),
+        itemId = null,
         name = name,
         category = category,
         store = store,
-        priceCents = priceCents,
-        finishedOn = LocalDate.of(2026, 7, 20),
-        finishedReason = reason
+        quantity = quantity,
+        reason = reason,
+        occurredOn = LocalDate.of(2026, 7, 20),
+        valueCents = valueCents
     )
 
     @Test
-    fun `empty history reports nothing rather than zero percent`() {
+    fun `an empty log reports nothing rather than zero percent`() {
         val report = WasteReport.from(emptyList())
-        assertEquals(0, report.finishedCount)
+        assertEquals(0.0, report.totalQuantity, 0.0001)
         assertNull(report.wastePercent)
     }
 
@@ -39,61 +42,74 @@ class WasteReportTest {
     fun `splits eaten from thrown out`() {
         val report = WasteReport.from(
             listOf(
-                finished("Spinach", FinishReason.DISCARDED),
-                finished("Milk", FinishReason.USED),
-                finished("Tofu", FinishReason.USED),
-                finished("Pork", FinishReason.USED)
+                event("Spinach", FinishReason.DISCARDED),
+                event("Milk", FinishReason.USED),
+                event("Tofu", FinishReason.USED),
+                event("Pork", FinishReason.USED)
             )
         )
-        assertEquals(3, report.usedCount)
-        assertEquals(1, report.discardedCount)
+        assertEquals(3.0, report.usedQuantity, 0.0001)
+        assertEquals(1.0, report.discardedQuantity, 0.0001)
         assertEquals(25, report.wastePercent)
     }
 
     @Test
-    fun `items finished before the reason column existed are not counted as waste`() {
+    fun `partial use counts for what it was, not as a whole item`() {
         val report = WasteReport.from(
             listOf(
-                finished("Legacy row", null),
-                finished("Spinach", FinishReason.DISCARDED),
-                finished("Milk", FinishReason.USED)
+                event("Ground Pork", FinishReason.USED, quantity = 0.5),
+                event("Ground Pork", FinishReason.DISCARDED, quantity = 0.5)
             )
         )
-        assertEquals(1, report.unknownCount)
-        assertEquals(3, report.finishedCount)
-        // Percent uses only rows with a known reason, so the unknown one cannot skew it.
+        assertEquals(0.5, report.usedQuantity, 0.0001)
+        assertEquals(0.5, report.discardedQuantity, 0.0001)
         assertEquals(50, report.wastePercent)
     }
 
     @Test
-    fun `sums the money thrown away, ignoring unpriced rows`() {
+    fun `entries carried over from before the reason column are not counted as waste`() {
         val report = WasteReport.from(
             listOf(
-                finished("Spinach", FinishReason.DISCARDED, priceCents = 499),
-                finished("Bok Choy", FinishReason.DISCARDED, priceCents = 329),
-                finished("Herbs", FinishReason.DISCARDED, priceCents = null),
-                finished("Milk", FinishReason.USED, priceCents = 899)
+                event("Legacy row", null),
+                event("Spinach", FinishReason.DISCARDED),
+                event("Milk", FinishReason.USED)
+            )
+        )
+        assertEquals(1.0, report.unknownQuantity, 0.0001)
+        assertEquals(3.0, report.totalQuantity, 0.0001)
+        // Percent uses only entries with a known reason, so the unknown one cannot skew it.
+        assertEquals(50, report.wastePercent)
+    }
+
+    @Test
+    fun `sums the money thrown away, ignoring unpriced entries`() {
+        val report = WasteReport.from(
+            listOf(
+                event("Spinach", FinishReason.DISCARDED, valueCents = 499),
+                event("Bok Choy", FinishReason.DISCARDED, valueCents = 329),
+                event("Herbs", FinishReason.DISCARDED, valueCents = null),
+                event("Milk", FinishReason.USED, valueCents = 899)
             )
         )
         assertEquals(828, report.discardedCents)
     }
 
     @Test
-    fun `ranks wasted categories by count, then by enum order`() {
+    fun `ranks wasted categories by quantity, then by enum order`() {
         val report = WasteReport.from(
             listOf(
-                finished("Spinach", FinishReason.DISCARDED, FoodCategory.VEGETABLES),
-                finished("Bok Choy", FinishReason.DISCARDED, FoodCategory.VEGETABLES),
-                finished("Salmon", FinishReason.DISCARDED, FoodCategory.SEAFOOD),
-                finished("Apple", FinishReason.DISCARDED, FoodCategory.FRUIT),
-                finished("Milk", FinishReason.USED, FoodCategory.DAIRY_EGGS)
+                event("Spinach", FinishReason.DISCARDED, category = FoodCategory.VEGETABLES),
+                event("Bok Choy", FinishReason.DISCARDED, category = FoodCategory.VEGETABLES),
+                event("Salmon", FinishReason.DISCARDED, category = FoodCategory.SEAFOOD),
+                event("Apple", FinishReason.DISCARDED, category = FoodCategory.FRUIT),
+                event("Milk", FinishReason.USED, category = FoodCategory.DAIRY_EGGS)
             )
         )
         assertEquals(
             listOf(
-                FoodCategory.VEGETABLES to 2,
-                FoodCategory.FRUIT to 1,
-                FoodCategory.SEAFOOD to 1
+                FoodCategory.VEGETABLES to 2.0,
+                FoodCategory.FRUIT to 1.0,
+                FoodCategory.SEAFOOD to 1.0
             ),
             report.discardedByCategory
         )
@@ -103,11 +119,11 @@ class WasteReportTest {
     fun `groups waste by store`() {
         val report = WasteReport.from(
             listOf(
-                finished("A", FinishReason.DISCARDED, store = Store.TT),
-                finished("B", FinishReason.DISCARDED, store = Store.TT),
-                finished("C", FinishReason.DISCARDED, store = Store.HMART)
+                event("A", FinishReason.DISCARDED, store = Store.TT),
+                event("B", FinishReason.DISCARDED, store = Store.TT),
+                event("C", FinishReason.DISCARDED, store = Store.HMART)
             )
         )
-        assertEquals(listOf(Store.TT to 2, Store.HMART to 1), report.discardedByStore)
+        assertEquals(listOf(Store.TT to 2.0, Store.HMART to 1.0), report.discardedByStore)
     }
 }

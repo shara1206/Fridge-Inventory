@@ -41,14 +41,16 @@ data class InventoryUiState(
 )
 
 /**
- * What was just removed, kept only long enough to offer undo. Quantity is captured because
- * an item can be finished after being partially used, and putting it back with the original
- * amount would quietly invent food.
+ * What was just logged, kept only long enough to offer undo.
+ *
+ * The handle is the *event* id, not the item id: undo means "that entry in the log did not
+ * happen", and only the event knows how much was taken off. [finished] is here so the
+ * snackbar can say "all gone" rather than "logged" when the row emptied.
  */
-data class UndoableFinish(
-    val id: Long,
+data class UndoableConsumption(
+    val eventId: Long,
     val name: String,
-    val quantity: Double
+    val finished: Boolean
 )
 
 class InventoryViewModel(private val repository: InventoryRepository) : ViewModel() {
@@ -58,8 +60,8 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
     private val category = MutableStateFlow<FoodCategory?>(null)
     private val store = MutableStateFlow<Store?>(null)
 
-    private val _lastFinished = MutableStateFlow<UndoableFinish?>(null)
-    val lastFinished: StateFlow<UndoableFinish?> = _lastFinished.asStateFlow()
+    private val _lastConsumption = MutableStateFlow<UndoableConsumption?>(null)
+    val lastConsumption: StateFlow<UndoableConsumption?> = _lastConsumption.asStateFlow()
 
     /** The inventory is small, so filtering in memory beats re-querying per keystroke. */
     val uiState: StateFlow<InventoryUiState> =
@@ -114,28 +116,30 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
     /**
      * Eating the last one empties the row, which is the same thing the ✓ button does — so it
      * records USED, feeds the waste report, and offers the same undo.
+     *
+     * Undo is offered on every tap, not only the one that empties the row: the tap now
+     * writes a line into a log the user will read later, and a mis-tap that only lowered a
+     * count used to be silently unfixable.
      */
     fun useOne(item: FoodItem) = viewModelScope.launch {
         val emptied = item.quantity - 1.0 <= 0.0001
-        repository.useAmount(item, 1.0)
-        if (emptied) {
-            _lastFinished.value = UndoableFinish(item.id, item.name, item.quantity)
-        }
+        val eventId = repository.useAmount(item, 1.0)
+        _lastConsumption.value = UndoableConsumption(eventId, item.name, emptied)
     }
 
     fun finish(item: FoodItem, reason: FinishReason) = viewModelScope.launch {
-        repository.markFinished(item.id, reason)
-        _lastFinished.value = UndoableFinish(item.id, item.name, item.quantity)
+        val eventId = repository.markFinished(item.id, reason) ?: return@launch
+        _lastConsumption.value = UndoableConsumption(eventId, item.name, finished = true)
     }
 
-    fun undoFinish() {
-        val finished = _lastFinished.value ?: return
-        _lastFinished.value = null
-        viewModelScope.launch { repository.restore(finished.id, finished.quantity) }
+    fun undoConsumption() {
+        val last = _lastConsumption.value ?: return
+        _lastConsumption.value = null
+        viewModelScope.launch { repository.undoConsumption(last.eventId) }
     }
 
     /** Called once the snackbar is gone, so a stale undo cannot fire later. */
-    fun clearUndo() { _lastFinished.value = null }
+    fun clearUndo() { _lastConsumption.value = null }
 
     companion object {
         fun factory(container: AppContainer) = object : ViewModelProvider.Factory {

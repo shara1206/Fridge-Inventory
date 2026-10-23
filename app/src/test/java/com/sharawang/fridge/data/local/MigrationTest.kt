@@ -132,4 +132,129 @@ class MigrationTest {
         }
         db.close()
     }
+
+    // ---- version 2 -> 3: the consumption log --------------------------------
+
+    private val createV2FoodItems = """
+        CREATE TABLE IF NOT EXISTS `food_items` (
+            `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+            `name` TEXT NOT NULL,
+            `category` TEXT NOT NULL,
+            `storageArea` TEXT NOT NULL,
+            `quantity` REAL NOT NULL,
+            `unit` TEXT NOT NULL,
+            `purchasedOn` TEXT NOT NULL,
+            `expiresOn` TEXT,
+            `store` TEXT NOT NULL,
+            `priceCents` INTEGER,
+            `notes` TEXT NOT NULL,
+            `finishedOn` TEXT,
+            `finishedReason` TEXT,
+            `purchaseId` INTEGER
+        )
+    """.trimIndent()
+
+    private fun openV2(): SupportSQLiteDatabase {
+        val configuration = SupportSQLiteOpenHelper.Configuration
+            .builder(ApplicationProvider.getApplicationContext())
+            .name(null) // in-memory
+            .callback(object : SupportSQLiteOpenHelper.Callback(2) {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    db.execSQL(createV2FoodItems)
+                }
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, old: Int, new: Int) = Unit
+            })
+            .build()
+        return FrameworkSQLiteOpenHelperFactory().create(configuration).writableDatabase
+    }
+
+    private fun insertV2(
+        db: SupportSQLiteDatabase,
+        name: String,
+        quantity: Double = 1.0,
+        finishedOn: String? = null,
+        finishedReason: String? = null,
+        priceCents: Int? = null
+    ) {
+        val on = finishedOn?.let { "'$it'" } ?: "NULL"
+        val reason = finishedReason?.let { "'$it'" } ?: "NULL"
+        val price = priceCents?.toString() ?: "NULL"
+        db.execSQL(
+            """
+            INSERT INTO food_items
+                (name, category, storageArea, quantity, unit, purchasedOn, store, notes,
+                 priceCents, finishedOn, finishedReason)
+            VALUES ('$name', 'VEGETABLES', 'FRIDGE', $quantity, 'ea', '2026-07-01', 'HMART', '',
+                    $price, $on, $reason)
+            """.trimIndent()
+        )
+    }
+
+    private fun events(db: SupportSQLiteDatabase, columns: String): List<List<String?>> {
+        val rows = mutableListOf<List<String?>>()
+        db.query("SELECT $columns FROM consumption_events ORDER BY id").use { cursor ->
+            while (cursor.moveToNext()) {
+                rows.add((0 until cursor.columnCount).map { cursor.getString(it) })
+            }
+        }
+        return rows
+    }
+
+    @Test
+    fun `finished rows are carried into the new log so history is not empty after upgrading`() {
+        val db = openV2()
+        insertV2(
+            db,
+            "Spinach",
+            quantity = 2.0,
+            finishedOn = "2026-07-10",
+            finishedReason = "DISCARDED",
+            priceCents = 499
+        )
+
+        MIGRATION_2_3.migrate(db)
+
+        assertEquals(
+            listOf(listOf("Spinach", "2.0", "DISCARDED", "2026-07-10", "499")),
+            events(db, "name, quantity, reason, occurredOn, valueCents")
+        )
+        db.close()
+    }
+
+    @Test
+    fun `a finish with no recorded reason stays unknown rather than counting as eaten`() {
+        val db = openV2()
+        insertV2(db, "Legacy row", finishedOn = "2026-07-10", finishedReason = null)
+
+        MIGRATION_2_3.migrate(db)
+
+        assertNull(events(db, "reason").single().single())
+        db.close()
+    }
+
+    @Test
+    fun `food still in the kitchen is not logged as consumed`() {
+        val db = openV2()
+        insertV2(db, "Bok Choy")
+        insertV2(db, "Milk", finishedOn = "2026-07-10", finishedReason = "USED")
+
+        MIGRATION_2_3.migrate(db)
+
+        assertEquals(listOf(listOf("Milk")), events(db, "name"))
+        db.close()
+    }
+
+    @Test
+    fun `the log survives a fresh v1 database walking the whole chain`() {
+        val db = openV1()
+        insertV1(db, "Spinach", "PRODUCE")
+
+        MIGRATION_1_2.migrate(db)
+        MIGRATION_2_3.migrate(db)
+
+        // Nothing was ever finished, so the log is empty rather than absent.
+        assertEquals(emptyList<List<String?>>(), events(db, "name"))
+        db.close()
+    }
 }

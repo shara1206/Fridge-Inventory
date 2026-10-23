@@ -133,3 +133,47 @@ interface PurchaseDao {
     @Query("SELECT * FROM purchase_lines WHERE purchaseId = :purchaseId ORDER BY id ASC")
     suspend fun linesFor(purchaseId: Long): List<PurchaseLine>
 }
+
+@Dao
+interface ConsumptionEventDao {
+
+    /** The log, newest first. Bounded because nobody scrolls a year back. */
+    @Query(
+        """
+        SELECT * FROM consumption_events
+        ORDER BY occurredOn DESC, recordedAt DESC, id DESC
+        LIMIT 200
+        """
+    )
+    fun observeRecent(): Flow<List<ConsumptionEvent>>
+
+    /** Feeds the waste report over a window. */
+    @Query(
+        """
+        SELECT * FROM consumption_events
+        WHERE occurredOn >= :since
+        ORDER BY occurredOn DESC, recordedAt DESC, id DESC
+        """
+    )
+    fun observeSince(since: LocalDate): Flow<List<ConsumptionEvent>>
+
+    @Query("SELECT * FROM consumption_events ORDER BY id ASC")
+    suspend fun getAll(): List<ConsumptionEvent>
+
+    @Query("SELECT * FROM consumption_events WHERE id = :id")
+    suspend fun getById(id: Long): ConsumptionEvent?
+
+    @Insert
+    suspend fun insert(event: ConsumptionEvent): Long
+
+    @Insert
+    suspend fun insertAll(events: List<ConsumptionEvent>): List<Long>
+
+    /** Undo. The log is a record of what happened, so a mistake is removed, not negated. */
+    @Query("DELETE FROM consumption_events WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    /** Only ever called behind an explicit "replace everything" confirmation on import. */
+    @Query("DELETE FROM consumption_events")
+    suspend fun deleteAll()
+}

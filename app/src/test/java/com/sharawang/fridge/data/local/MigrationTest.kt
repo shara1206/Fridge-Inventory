@@ -215,10 +215,16 @@ class MigrationTest {
 
         MIGRATION_2_3.migrate(db)
 
+        // Quantity is compared as a number: Android's cursor renders REAL 2.0 as "2", so a
+        // string comparison would test the cursor's formatting rather than the migration.
         assertEquals(
-            listOf(listOf("Spinach", "2.0", "DISCARDED", "2026-07-10", "499")),
-            events(db, "name, quantity, reason, occurredOn, valueCents")
+            listOf(listOf("Spinach", "DISCARDED", "2026-07-10", "499")),
+            events(db, "name, reason, occurredOn, valueCents")
         )
+        db.query("SELECT quantity FROM consumption_events").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(2.0, cursor.getDouble(0), 0.0001)
+        }
         db.close()
     }
 

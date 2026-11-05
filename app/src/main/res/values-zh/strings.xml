@@ -104,6 +104,11 @@
     <string name="action_import">导入</string>
     <string name="backup_exported">已导出 %1$d 条</string>
     <string name="backup_imported">已导入 %1$d 条</string>
+    <string name="section_receipt_text">小票识别文字</string>
+    <string name="receipt_text_desc">把每张扫描过的小票识别出的文字存成文本文件。哪张小票识别得不好，就把这个文件发出来，用来修解析器。</string>
+    <string name="action_export_receipt_text">导出识别文字</string>
+    <string name="receipts_exported">已导出 %1$d 张小票的文字</string>
+    <string name="scan_share_text">分享识别文字</string>
     <string name="backup_failed">这个文件读不出来。%1$s</string>
     <string name="import_mode_title">怎么导入？</string>
     <string name="import_mode_body">合并：把文件加到现有库存上，同名同位置的合成一条。覆盖：先清空现有全部记录，换手机时用这个。</string>

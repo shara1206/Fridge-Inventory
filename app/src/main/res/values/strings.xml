@@ -112,6 +112,11 @@
     <string name="action_import">Import</string>
     <string name="backup_exported">Exported %1$d items</string>
     <string name="backup_imported">Imported %1$d items</string>
+    <string name="section_receipt_text">Receipt OCR text</string>
+    <string name="receipt_text_desc">Save what the camera read off every scanned receipt to a text file. Send it along when a receipt was recognised badly, so the parser can be fixed.</string>
+    <string name="action_export_receipt_text">Export OCR text</string>
+    <string name="receipts_exported">Exported text from %1$d receipts</string>
+    <string name="scan_share_text">Share OCR text</string>
     <string name="backup_failed">Could not read that file. %1$s</string>
     <string name="import_mode_title">Import how?</string>
     <string name="import_mode_body">Merge adds the file to what you already have, folding repeats into one line. Replace deletes everything currently logged first — use that when moving to a new phone.</string>

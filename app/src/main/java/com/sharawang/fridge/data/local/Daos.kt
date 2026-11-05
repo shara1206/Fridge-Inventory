@@ -132,6 +132,10 @@ interface PurchaseDao {
     @Query("SELECT * FROM purchases ORDER BY purchasedOn DESC, id DESC LIMIT 100")
     fun observeRecent(): Flow<List<Purchase>>
 
+    /** Every receipt ever scanned, most recently scanned first. */
+    @Query("SELECT * FROM purchases ORDER BY id DESC")
+    suspend fun getAll(): List<Purchase>
+
     @Query("SELECT * FROM purchase_lines WHERE purchaseId = :purchaseId ORDER BY id ASC")
     suspend fun linesFor(purchaseId: Long): List<PurchaseLine>
 }

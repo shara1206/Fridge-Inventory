@@ -84,6 +84,9 @@ class InventoryRepository(
 
     fun recentPurchases(): Flow<List<Purchase>> = purchaseDao.observeRecent()
 
+    /** Every scanned receipt, newest scan first. The OCR text export reads through this. */
+    suspend fun allPurchases(): List<Purchase> = purchaseDao.getAll()
+
     suspend fun item(id: Long): FoodItem? = foodItemDao.getById(id)
 
     /** Everything that expires on or before [date] and has not been used up. */

@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
  */
 sealed interface BackupResult {
     data class Exported(val count: Int) : BackupResult
+    data class ReceiptsExported(val count: Int) : BackupResult
     data class Imported(val count: Int) : BackupResult
     data class Failed(val reason: String?) : BackupResult
 }
@@ -87,6 +88,12 @@ class SettingsViewModel(
     fun suggestedFileName(): String = backupRepository.suggestedFileName()
 
     fun export(uri: Uri) = runBackup { BackupResult.Exported(backupRepository.exportTo(uri)) }
+
+    fun suggestedReceiptTextFileName(): String = backupRepository.suggestedReceiptTextFileName()
+
+    fun exportReceiptText(uri: Uri) = runBackup {
+        BackupResult.ReceiptsExported(backupRepository.exportReceiptText(uri))
+    }
 
     fun import(uri: Uri, mode: ImportMode) = runBackup {
         BackupResult.Imported(backupRepository.importFrom(uri, mode))

@@ -1,5 +1,6 @@
 package com.sharawang.fridge.ui.scan
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -44,6 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sharawang.fridge.R
 import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.receipt.ReceiptImageStore
+import com.sharawang.fridge.receipt.ReceiptTextExport
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,6 +142,22 @@ fun ScanScreen(viewModel: ScanViewModel, onDone: () -> Unit) {
                         }
                         TextButton(onClick = { viewModel.keepAll(false) }) {
                             Text(stringResource(R.string.scan_select_none))
+                        }
+                        // Through the share sheet rather than any upload: the app has no
+                        // network access, and the user picks where the text goes.
+                        val shareTitle = stringResource(R.string.scan_share_text)
+                        TextButton(onClick = {
+                            val text = ReceiptTextExport.receipt(
+                                rawText = receipt.rawText,
+                                store = receipt.store,
+                                purchasedOn = receipt.purchasedOn
+                            )
+                            val send = Intent(Intent.ACTION_SEND)
+                                .setType("text/plain")
+                                .putExtra(Intent.EXTRA_TEXT, text)
+                            context.startActivity(Intent.createChooser(send, shareTitle))
+                        }) {
+                            Text(shareTitle)
                         }
                     }
                     LazyColumn(

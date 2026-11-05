@@ -30,7 +30,7 @@ import org.robolectric.annotation.Config
  * it is a record of what is already installed on devices.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class MigrationSchemaTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()

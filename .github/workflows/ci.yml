@@ -20,53 +20,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      # 21 rather than 17: Robolectric needs Java 21 to run tests against API 35. The
+      # bytecode still targets 17 (see compileOptions in app/build.gradle.kts).
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
-      # Provisions Gradle 8.9 on PATH and handles the dependency cache, so this
-      # workflow runs whether or not gradle-wrapper.jar is committed yet.
+      # Uses the committed wrapper (Gradle 8.9) and handles the dependency cache.
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.9'
 
-      - name: Make sure compileSdk 35 is installed
+      # Fails the job if the SDK cannot be provisioned, instead of carrying on and failing
+      # later with a less obvious error.
+      - name: Install compileSdk 35
         run: |
           SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          if [ -x "$SDKMANAGER" ]; then
-            yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
-            "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" > /dev/null || true
-          fi
-
-      - name: Pick a Gradle entry point
-        id: gradle
-        run: |
-          if [ -f gradle/wrapper/gradle-wrapper.jar ] && [ -x gradlew ]; then
-            echo "cmd=./gradlew" >> "$GITHUB_OUTPUT"
-            echo "Using the committed Gradle wrapper."
-          else
-            echo "cmd=gradle" >> "$GITHUB_OUTPUT"
-            echo "No gradle-wrapper.jar committed; using the provisioned Gradle."
-          fi
+          test -x "$SDKMANAGER" || { echo "sdkmanager not found under \$ANDROID_HOME"; exit 1; }
+          # `yes` dies of SIGPIPE when sdkmanager stops reading; under pipefail that
+          # would fail the step, so its own exit status is ignored.
+          (yes || true) | "$SDKMANAGER" --licenses > /dev/null
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" > /dev/null
 
       # Includes the Robolectric database and migration tests, so the data layer is covered
       # here without an emulator. The instrumented Compose test needs a device and is not run.
       - name: Unit tests
-        run: ${{ steps.gradle.outputs.cmd }} testDebugUnitTest --no-daemon --stacktrace
+        run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
       # Style only — deliberately non-blocking until the baseline is clean.
       - name: ktlint
         continue-on-error: true
-        run: ${{ steps.gradle.outputs.cmd }} ktlintCheck --no-daemon
+        run: ./gradlew ktlintCheck --no-daemon
 
       - name: Android Lint
-        run: ${{ steps.gradle.outputs.cmd }} lintDebug --no-daemon
+        run: ./gradlew lintDebug --no-daemon
 
       - name: Assemble debug APK
-        run: ${{ steps.gradle.outputs.cmd }} assembleDebug --no-daemon
+        run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload test report
         if: always()

@@ -7,9 +7,9 @@ the fridge, freezer and pantry, entered by hand or by photographing a grocery re
 
 ## Build and test
 
-Requirements: JDK 17+ (CI uses 17), Android SDK with `platforms;android-35` and
-`build-tools;35.0.0` (AGP 8.5.2 also wants `build-tools;34.0.0` by default). The SDK path
-comes from `ANDROID_HOME` or `sdk.dir` in `local.properties`, which is gitignored.
+Requirements: JDK 21 (Robolectric needs it for API 35; bytecode still targets 17), Android
+SDK with `platforms;android-35` and `build-tools;35.0.0` (AGP 8.5.2 also wants
+`build-tools;34.0.0` by default). The SDK path comes from `ANDROID_HOME` or `sdk.dir` in `local.properties`, which is gitignored.
 
 ```bash
 ./gradlew assembleDebug        # debug APK -> app/build/outputs/apk/debug/
@@ -21,9 +21,9 @@ comes from `ANDROID_HOME` or `sdk.dir` in `local.properties`, which is gitignore
 ./gradlew connectedCheck       # the single instrumented Compose test; needs a device
 ```
 
-- The Gradle wrapper is pinned to 8.9 (`gradle/wrapper/gradle-wrapper.properties`). CI
-  (`.github/workflows/ci.yml`) falls back to a provisioned `gradle` when no wrapper JAR is
-  committed.
+- The Gradle wrapper is committed and pinned to 8.9
+  (`gradle/wrapper/gradle-wrapper.properties`). CI (`.github/workflows/ci.yml`) runs it on
+  JDK 21 and fails if the SDK cannot be installed.
 - Dependency versions live only in `gradle/libs.versions.toml`. Add new libraries there and
   reference them as `libs.*`.
 - Network: Google Maven (`maven.google.com`) redirects to `dl.google.com`, so that host has
@@ -47,7 +47,7 @@ comes from `ANDROID_HOME` or `sdk.dir` in `local.properties`, which is gitignore
 | `ui/<screen>/` | One package per screen: `XxxScreen.kt` (composables) and `XxxViewModel.kt` (state, plus a `factory(container)`). `ui/theme/` holds the Morandi palette. |
 
 Tests are in `app/src/test/` (JVM, plus Robolectric for DB/repo/backup/migration, all
-pinned to `@Config(sdk = [34])`). `app/src/androidTest/` holds one Compose smoke test.
+pinned to `@Config(sdk = [35])`). `app/src/androidTest/` holds one Compose smoke test.
 `app/src/test/resources/robolectric.properties` swaps in a bare `Application` because the
 real one starts ML Kit, which cannot run under Robolectric.
 

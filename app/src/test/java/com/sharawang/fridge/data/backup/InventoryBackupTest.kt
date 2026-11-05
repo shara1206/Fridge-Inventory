@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class InventoryBackupTest {
 
     private val today = LocalDate.of(2026, 7, 30)

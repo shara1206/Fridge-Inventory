@@ -65,8 +65,7 @@ cd fridge-inventory
 ```
 
 Open the folder in Android Studio (Ladybug or newer) and let it sync. The Gradle wrapper
-JAR is intentionally not committed — Android Studio regenerates it on first sync, or run
-`gradle wrapper` once if you have Gradle installed.
+(8.9) is committed, so `./gradlew` works from a clean checkout.
 
 ```bash
 ./gradlew testDebugUnitTest   # parsers, shelf life, database, migrations — all on the JVM
@@ -78,10 +77,9 @@ JAR is intentionally not committed — Android Studio regenerates it on first sy
 
 Every push and pull request runs the unit tests, Android Lint and a debug build via
 [GitHub Actions](.github/workflows/ci.yml); the debug APK and both reports are uploaded as
-build artifacts. The workflow provisions its own Gradle, so it works whether or not
-`gradle-wrapper.jar` has been committed.
+build artifacts. The workflow runs the committed wrapper.
 
-Requires JDK 17, `compileSdk` 35, `minSdk` 26 (API 26 for `java.time` without desugaring).
+Requires JDK 21 (unit tests run Robolectric against API 35; bytecode targets 17), `compileSdk` 35, `minSdk` 26 (API 26 for `java.time` without desugaring).
 
 ## How the receipt pipeline works
 

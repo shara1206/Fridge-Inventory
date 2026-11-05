@@ -22,7 +22,7 @@ import java.time.LocalDate
  * drifts, which no amount of UI testing would catch.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class FoodItemDaoTest {
 
     private lateinit var database: AppDatabase

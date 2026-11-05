@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
  * user's data, so they should never be the untested part.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class MigrationTest {
 
     private val createV1FoodItems = """

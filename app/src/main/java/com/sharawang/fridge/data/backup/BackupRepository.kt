@@ -6,9 +6,9 @@ import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.isFinished
 import com.sharawang.fridge.data.repo.InventoryRepository
+import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 
 /** How an import should treat what is already in the database. */
 enum class ImportMode {
@@ -31,7 +31,8 @@ class BackupRepository(
 ) {
 
     /** Suggested filename; the user can rename it in the system picker. */
-    fun suggestedFileName(today: LocalDate = LocalDate.now()): String = "fridge-inventory-$today.json"
+    fun suggestedFileName(today: LocalDate = LocalDate.now()): String =
+        "fridge-inventory-$today.json"
 
     /** @return how many item rows were written. The consumption log rides along. */
     suspend fun exportTo(uri: Uri): Int = withContext(Dispatchers.IO) {
@@ -62,14 +63,18 @@ class BackupRepository(
      * Finished rows are history and simply appended — merging them would rewrite the past.
      * Live rows go through the same merge path as a repeat purchase, so importing a backup
      * onto a kitchen that already has spinach in it reads as "2 spinach", not two lines.
+     *
+     * One transaction for the whole file: a failure on row 40 should not leave 39 of them
+     * imported, because importing the same file again would then double those 39.
      */
-    private suspend fun merge(items: List<FoodItem>, events: List<ConsumptionEvent>) {
-        val (history, live) = items.partition { it.isFinished }
-        if (history.isNotEmpty()) repository.insertAll(history)
-        live.forEach { repository.addOrMerge(it) }
-        // Log entries are appended for the same reason: they are dated statements about the
-        // past. Importing the same file twice will duplicate them, which is the honest
-        // failure — silently discarding entries would lose a kitchen's history.
-        if (events.isNotEmpty()) repository.insertAllEvents(events)
-    }
+    private suspend fun merge(items: List<FoodItem>, events: List<ConsumptionEvent>): Unit =
+        repository.inTransaction {
+            val (history, live) = items.partition { it.isFinished }
+            if (history.isNotEmpty()) repository.insertAll(history)
+            live.forEach { repository.addOrMerge(it) }
+            // Log entries are appended for the same reason: they are dated statements about the
+            // past. Importing the same file twice will duplicate them, which is the honest
+            // failure — silently discarding entries would lose a kitchen's history.
+            if (events.isNotEmpty()) repository.insertAllEvents(events)
+        }
 }

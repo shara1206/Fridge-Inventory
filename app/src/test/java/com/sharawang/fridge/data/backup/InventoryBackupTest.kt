@@ -6,6 +6,7 @@ import com.sharawang.fridge.data.local.FoodCategory
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.data.local.Store
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -13,10 +14,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class InventoryBackupTest {
 
     private val today = LocalDate.of(2026, 7, 30)

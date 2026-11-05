@@ -81,7 +81,14 @@ data class LabelSheet(val zones: List<LabelZone>) {
                 // Grouped by where it lives first: the extras get taped up together, and
                 // sorting by category would scatter the freezer cards among the fridge ones.
                 .sortedWith(compareBy({ it.second.ordinal }, { it.first.ordinal }))
-                .map { key -> LabelZone(key.first, key.second, byZone.getValue(key), printed = false) }
+                .map { key ->
+                    LabelZone(
+                        key.first,
+                        key.second,
+                        byZone.getValue(key),
+                        printed = false
+                    )
+                }
 
             return LabelSheet(printed + extra)
         }
@@ -94,12 +101,10 @@ data class LabelSheet(val zones: List<LabelZone>) {
  * A count of one is left off: the name already says there is one, and "×1" on every line
  * turns a list you can read across the kitchen into a table you have to study.
  */
-fun FoodItem.labelLine(): String =
-    if (quantity > 1.0) "$name ×${trimQuantity(quantity)}" else name
+fun FoodItem.labelLine(): String = if (quantity > 1.0) "$name ×${trimQuantity(quantity)}" else name
 
-private fun trimQuantity(quantity: Double): String =
-    if (quantity == quantity.toLong().toDouble()) {
-        quantity.toLong().toString()
-    } else {
-        quantity.toString()
-    }
+private fun trimQuantity(quantity: Double): String = if (quantity == quantity.toLong().toDouble()) {
+    quantity.toLong().toString()
+} else {
+    quantity.toString()
+}

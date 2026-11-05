@@ -1,3 +1,6 @@
+// Named after the conventional Compose theme file rather than its one object.
+@file:Suppress("ktlint:standard:filename")
+
 package com.sharawang.fridge.ui.theme
 
 import androidx.compose.ui.graphics.Color

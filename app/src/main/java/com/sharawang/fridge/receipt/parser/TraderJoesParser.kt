@@ -22,8 +22,13 @@ class TraderJoesParser : LineBasedParser() {
     )
 
     override val extraAbbreviations = mapOf(
-        "EVOO" to "Olive Oil", "MED" to "Medium", "SM" to "Small",
-        "SLD" to "Salad", "SNP" to "Snap", "RSTD" to "Roasted",
-        "UNSWT" to "Unsweetened", "GF" to "Gluten Free"
+        "EVOO" to "Olive Oil",
+        "MED" to "Medium",
+        "SM" to "Small",
+        "SLD" to "Salad",
+        "SNP" to "Snap",
+        "RSTD" to "Roasted",
+        "UNSWT" to "Unsweetened",
+        "GF" to "Gluten Free"
     )
 }

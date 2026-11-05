@@ -104,9 +104,9 @@ abstract class LineBasedParser : ReceiptParser {
 
     protected open fun confidenceFor(name: String, priceCents: Int): Float {
         var score = 0.5f
-        if (name.contains(' ')) score += 0.2f            // multi-word names are usually real
+        if (name.contains(' ')) score += 0.2f // multi-word names are usually real
         if (name.length in 4..40) score += 0.2f
-        if (priceCents in 25..10_000) score += 0.1f      // 0.25 – 100.00
+        if (priceCents in 25..10_000) score += 0.1f // 0.25 – 100.00
         return score.coerceAtMost(1f)
     }
 
@@ -143,7 +143,8 @@ abstract class LineBasedParser : ReceiptParser {
             return runCatching { LocalDate.of(year, a.toInt(), b.toInt()) }.getOrNull()
         }
         DATE_ISO.find(rawText)?.let { m ->
-            return runCatching { LocalDate.parse(m.value, DateTimeFormatter.ISO_LOCAL_DATE) }.getOrNull()
+            return runCatching { LocalDate.parse(m.value, DateTimeFormatter.ISO_LOCAL_DATE) }
+                .getOrNull()
         }
         return null
     }
@@ -173,8 +174,10 @@ abstract class LineBasedParser : ReceiptParser {
             Regex("""\bRETURN\b|\bREFUND\b|\bPOLICY\b|\bRECEIPT\b|\bSURVEY\b"""),
             Regex("""\bITEMS?\s+(SOLD|COUNT)\b|\b# ?OF ?ITEMS\b"""),
             Regex("""\bBAG\s?FEE\b|\bBOTTLE\s?DEPOSIT\b|\bCRV\b"""),
-            Regex("""^\**\d{4}$"""),                          // masked card digits
-            Regex("""\b\d{3}[-.]\d{3}[-.]\d{4}\b"""),         // phone numbers
+            // masked card digits
+            Regex("""^\**\d{4}$"""),
+            // phone numbers
+            Regex("""\b\d{3}[-.]\d{3}[-.]\d{4}\b"""),
             Regex("""\bWWW\.|\.COM\b|\bHTTP""")
         )
 
@@ -211,8 +214,8 @@ abstract class LineBasedParser : ReceiptParser {
         fun titleCase(text: String): String = text.split(' ').joinToString(" ") { word ->
             when {
                 word.isEmpty() -> word
-                word.length <= 2 && word.all { it.isUpperCase() } -> word  // T&T, XL
-                word.any { it.isLowerCase() } -> word                      // already cased
+                word.length <= 2 && word.all { it.isUpperCase() } -> word // T&T, XL
+                word.any { it.isLowerCase() } -> word // already cased
                 else -> word.lowercase().replaceFirstChar { it.uppercase() }
             }
         }

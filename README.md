@@ -1,6 +1,6 @@
 # Fridge Inventory
 
-[![CI](https://github.com/USERNAME/fridge-inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/fridge-inventory/actions/workflows/ci.yml)
+[![CI](https://github.com/shara1206/Fridge-Inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/shara1206/Fridge-Inventory/actions/workflows/ci.yml)
 
 An Android app for tracking what is actually in the fridge, freezer and pantry — logged
 either by typing an item in or by photographing a grocery receipt.
@@ -9,8 +9,6 @@ Everything is stored locally in SQLite. The app declares **no `INTERNET` permiss
 receipt OCR runs on-device with a model bundled in the APK, so no photo or shopping
 history ever leaves the phone. The only permission it declares at all is
 `POST_NOTIFICATIONS`, requested lazily when you switch reminders on.
-
-> Replace `USERNAME` in the badge URL above with your GitHub account once the repo is pushed.
 
 ## Status
 
@@ -65,23 +63,21 @@ cd fridge-inventory
 ```
 
 Open the folder in Android Studio (Ladybug or newer) and let it sync. The Gradle wrapper
-JAR is intentionally not committed — Android Studio regenerates it on first sync, or run
-`gradle wrapper` once if you have Gradle installed.
+(8.9) is committed, so `./gradlew` works from a clean checkout.
 
 ```bash
 ./gradlew testDebugUnitTest   # parsers, shelf life, database, migrations — all on the JVM
 ./gradlew lintDebug
-./gradlew ktlintCheck         # style, non-blocking until the baseline is clean
+./gradlew ktlintCheck         # style; ktlintFormat fixes most findings
 ./gradlew connectedCheck      # the one instrumented Compose test (needs a device)
 ./gradlew installDebug
 ```
 
 Every push and pull request runs the unit tests, Android Lint and a debug build via
 [GitHub Actions](.github/workflows/ci.yml); the debug APK and both reports are uploaded as
-build artifacts. The workflow provisions its own Gradle, so it works whether or not
-`gradle-wrapper.jar` has been committed.
+build artifacts. The workflow runs the committed wrapper.
 
-Requires JDK 17, `compileSdk` 35, `minSdk` 26 (API 26 for `java.time` without desugaring).
+Requires JDK 21 (unit tests run Robolectric against API 35; bytecode targets 17), `compileSdk` 35, `minSdk` 26 (API 26 for `java.time` without desugaring).
 
 ## How the receipt pipeline works
 
@@ -237,6 +233,7 @@ thrown out no longer weighs the same as a whole one.
 **Done**
 
 - [x] CI: unit tests, ktlint, Android Lint and a debug build on every push
+- [x] Clean ktlint baseline; style violations now fail the build
 - [x] Expiry notifications via WorkManager, opt-in and off by default
 - [x] Filtering on three axes (storage area, category, store), bilingual labels
 - [x] Room migrations, with the migration itself under test
@@ -252,7 +249,6 @@ thrown out no longer weighs the same as a whole one.
 **Next**
 
 - [ ] Shopping list generated from what is running low
-- [ ] Clean the ktlint baseline, then flip `ignoreFailures` to false
 - [ ] Widen the instrumented suite past the single smoke test
 
 **Parked until a release is actually on the table**

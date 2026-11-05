@@ -3,13 +3,13 @@ package com.sharawang.fridge.data.labels
 import android.content.Context
 import android.net.Uri
 import com.sharawang.fridge.data.repo.InventoryRepository
+import java.io.IOException
+import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.io.IOException
-import java.time.LocalDate
 
 /**
  * The printable zone sheet, and writing it out as a PDF.

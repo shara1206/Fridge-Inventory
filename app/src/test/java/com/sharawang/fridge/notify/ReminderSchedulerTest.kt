@@ -1,9 +1,9 @@
 package com.sharawang.fridge.notify
 
+import java.time.LocalDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDateTime
 
 class ReminderSchedulerTest {
 

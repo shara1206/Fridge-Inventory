@@ -2,11 +2,11 @@ package com.sharawang.fridge.receipt
 
 import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.receipt.parser.Parsers
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
 
 class ParserTest {
 

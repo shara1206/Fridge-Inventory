@@ -113,7 +113,11 @@
 
     <string name="title_history">历史</string>
     <string name="history_empty">还没有东西离开厨房。</string>
-    <string name="history_hint">列表上每次按 − 或 ✓ 都会记录在这里。</string>
+    <string name="history_hint">列表上每次按 −、✓ 或垃圾桶都会记录在这里。</string>
+    <string name="history_empty_filtered">还没有这类记录。</string>
+    <string name="history_this_week">本周</string>
+    <string name="history_last_week">上周</string>
+    <string name="history_week_range">%1$s – %2$s</string>
     <string name="waste_window">最近 30 天</string>
     <string name="waste_eaten">吃掉 %1$s</string>
     <string name="waste_thrown">扔掉 %1$s</string>

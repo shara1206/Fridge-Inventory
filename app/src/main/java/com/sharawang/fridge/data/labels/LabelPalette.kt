@@ -11,16 +11,26 @@ object LabelPalette {
 
     /** One per printed zone, in [LabelSheet.PRINTED_ZONES] order. */
     val cardFills = intArrayOf(
-        0xFFD9D2BE.toInt(), // dairy & eggs
-        0xFFC8D0C1.toInt(), // vegetables
-        0xFFD6C4C6.toInt(), // fruit
-        0xFFC3CDD3.toInt(), // tofu — inherited from the seasoning card it replaced
-        0xFFCEC6D0.toInt(), // ready to eat, fridge
-        0xFFCEC6D0.toInt(), // ready to eat, freezer
-        0xFFD2BEC1.toInt(), // meat
-        0xFFC1CDD2.toInt(), // seafood
-        0xFFCDC4CF.toInt(), // ice cream & dessert
-        0xFFD6CFB9.toInt() // frozen staples
+        // dairy & eggs
+        0xFFD9D2BE.toInt(),
+        // vegetables
+        0xFFC8D0C1.toInt(),
+        // fruit
+        0xFFD6C4C6.toInt(),
+        // tofu — inherited from the seasoning card it replaced
+        0xFFC3CDD3.toInt(),
+        // ready to eat, fridge
+        0xFFCEC6D0.toInt(),
+        // ready to eat, freezer
+        0xFFCEC6D0.toInt(),
+        // meat
+        0xFFD2BEC1.toInt(),
+        // seafood
+        0xFFC1CDD2.toInt(),
+        // ice cream & dessert
+        0xFFCDC4CF.toInt(),
+        // frozen staples
+        0xFFD6CFB9.toInt()
     )
 
     /** The pill behind the 冷藏 / 冷冻 chip: the same hue, taken down to hold white text. */

@@ -10,7 +10,6 @@ receipt OCR runs on-device with a model bundled in the APK, so no photo or shopp
 history ever leaves the phone. The only permission it declares at all is
 `POST_NOTIFICATIONS`, requested lazily when you switch reminders on.
 
-
 ## Status
 
 Working skeleton, developed in the open. The data layer, receipt pipeline and screens are

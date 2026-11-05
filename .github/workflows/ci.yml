@@ -103,3 +103,18 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: ignore
           retention-days: 14
+
+  web:
+    name: Web app tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # Parsers, shelf life, repository logic, the shared backup format and the offline
+      # file list. No dependencies to install: plain node:test.
+      - name: Unit tests
+        working-directory: web
+        run: node --test tests/*.test.js

@@ -34,6 +34,26 @@ SDK with `platforms;android-35` and `build-tools;35.0.0` (AGP 8.5.2 also wants
 - Network: Google Maven (`maven.google.com`) redirects to `dl.google.com`, so that host has
   to be reachable for both the SDK and the AGP/AndroidX/ML Kit dependencies.
 
+## Web version (`web/`)
+
+A no-build PWA for iPhone: plain ES modules, IndexedDB, offline service worker, published to
+GitHub Pages by `.github/workflows/pages.yml`. See `web/README.md`.
+
+```bash
+cd web && node --test tests/*.test.js   # also runs in CI
+cd web && python3 -m http.server 8000
+```
+
+- `web/js/parsers.js`, `shelf-life.js`, `repo.js`, `backup.js` and `receipt-text.js` port the
+  Kotlin `receipt/parser/`, `ShelfLife`, `InventoryRepository`/`WasteReport`,
+  `InventoryBackup` and `ReceiptTextExport`. Keep both sides in step: a parser fix ships on
+  both with the fixture added to both `SampleReceipts.kt` and `web/tests/sample-receipts.js`.
+  The backup JSON format is shared; `web/tests/fixtures/android-backup.json` came from the
+  Android encoder.
+- The whole state is one IndexedDB record written in a single put per change (atomic).
+- New app files go in `sw.js` `FILES` (a test enforces it); bump `VERSION` on every change.
+- UI strings live in `web/js/i18n.js` (en + zh), mirroring the Android string resources.
+
 ## Layout (`app/src/main/java/com/sharawang/fridge/`)
 
 | Path | What lives there |

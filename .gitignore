@@ -14,3 +14,6 @@ local.properties
 *.keystore
 !debug.keystore
 /keystore.properties
+
+# Kotlin compiler daemon state
+.kotlin/

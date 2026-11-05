@@ -1,6 +1,6 @@
 # Fridge Inventory
 
-[![CI](https://github.com/USERNAME/fridge-inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/fridge-inventory/actions/workflows/ci.yml)
+[![CI](https://github.com/shara1206/Fridge-Inventory/actions/workflows/ci.yml/badge.svg)](https://github.com/shara1206/Fridge-Inventory/actions/workflows/ci.yml)
 
 An Android app for tracking what is actually in the fridge, freezer and pantry — logged
 either by typing an item in or by photographing a grocery receipt.
@@ -10,7 +10,6 @@ receipt OCR runs on-device with a model bundled in the APK, so no photo or shopp
 history ever leaves the phone. The only permission it declares at all is
 `POST_NOTIFICATIONS`, requested lazily when you switch reminders on.
 
-> Replace `USERNAME` in the badge URL above with your GitHub account once the repo is pushed.
 
 ## Status
 

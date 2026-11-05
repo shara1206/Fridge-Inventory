@@ -70,7 +70,7 @@ Open the folder in Android Studio (Ladybug or newer) and let it sync. The Gradle
 ```bash
 ./gradlew testDebugUnitTest   # parsers, shelf life, database, migrations — all on the JVM
 ./gradlew lintDebug
-./gradlew ktlintCheck         # style, non-blocking until the baseline is clean
+./gradlew ktlintCheck         # style; ktlintFormat fixes most findings
 ./gradlew connectedCheck      # the one instrumented Compose test (needs a device)
 ./gradlew installDebug
 ```
@@ -235,6 +235,7 @@ thrown out no longer weighs the same as a whole one.
 **Done**
 
 - [x] CI: unit tests, ktlint, Android Lint and a debug build on every push
+- [x] Clean ktlint baseline; style violations now fail the build
 - [x] Expiry notifications via WorkManager, opt-in and off by default
 - [x] Filtering on three axes (storage area, category, store), bilingual labels
 - [x] Room migrations, with the migration itself under test
@@ -250,7 +251,6 @@ thrown out no longer weighs the same as a whole one.
 **Next**
 
 - [ ] Shopping list generated from what is running low
-- [ ] Clean the ktlint baseline, then flip `ignoreFailures` to false
 - [ ] Widen the instrumented suite past the single smoke test
 
 **Parked until a release is actually on the table**

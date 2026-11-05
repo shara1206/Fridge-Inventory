@@ -10,6 +10,7 @@ import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.receipt.ParsedLine
 import com.sharawang.fridge.receipt.ParsedReceipt
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -21,7 +22,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])

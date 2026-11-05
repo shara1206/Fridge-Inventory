@@ -6,6 +6,7 @@ import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.ui.MainDispatcherRule
 import com.sharawang.fridge.ui.TestDatabase
 import com.sharawang.fridge.ui.await
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -19,7 +20,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])

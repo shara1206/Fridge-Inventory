@@ -16,7 +16,7 @@ SDK with `platforms;android-35` and `build-tools;35.0.0` (AGP 8.5.2 also wants
 ./gradlew testDebugUnitTest    # all JVM tests, including Robolectric DB/migration tests
 ./gradlew testDebugUnitTest --tests 'com.sharawang.fridge.receipt.ParserTest'
 ./gradlew lintDebug            # Android Lint, blocking in CI
-./gradlew ktlintCheck          # style, non-blocking (ignoreFailures = true)
+./gradlew ktlintCheck          # style; blocking in CI (rules in .editorconfig)
 ./gradlew ktlintFormat
 ./gradlew connectedCheck       # the single instrumented Compose test; needs a device
 ```

@@ -2,6 +2,7 @@ package com.sharawang.fridge.data.local
 
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -14,7 +15,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.LocalDate
 
 /**
  * Runs on the JVM through Robolectric so the database layer is covered in CI without an
@@ -116,14 +116,13 @@ class FoodItemDaoTest {
     }
 
     @Test
-    fun `findActiveMatch ignores case and surrounding space but respects storage area`() =
-        runTest {
-            dao.insert(item("  Baby Spinach ", today.plusDays(4)))
+    fun `findActiveMatch ignores case and surrounding space but respects storage area`() = runTest {
+        dao.insert(item("  Baby Spinach ", today.plusDays(4)))
 
-            assertNotNull(dao.findActiveMatch("baby spinach", StorageArea.FRIDGE))
-            assertNull(dao.findActiveMatch("baby spinach", StorageArea.FREEZER))
-            assertNull(dao.findActiveMatch("bok choy", StorageArea.FRIDGE))
-        }
+        assertNotNull(dao.findActiveMatch("baby spinach", StorageArea.FRIDGE))
+        assertNull(dao.findActiveMatch("baby spinach", StorageArea.FREEZER))
+        assertNull(dao.findActiveMatch("bok choy", StorageArea.FRIDGE))
+    }
 
     @Test
     fun `findActiveMatch never returns a finished row`() = runTest {

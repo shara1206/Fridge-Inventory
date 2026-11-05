@@ -7,18 +7,18 @@ import com.sharawang.fridge.data.local.ConsumptionEventDao
 import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.FoodItemDao
-import com.sharawang.fridge.data.local.isFinished
 import com.sharawang.fridge.data.local.Purchase
 import com.sharawang.fridge.data.local.PurchaseDao
 import com.sharawang.fridge.data.local.PurchaseLine
 import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.data.local.Store
+import com.sharawang.fridge.data.local.isFinished
 import com.sharawang.fridge.receipt.ParsedLine
 import com.sharawang.fridge.receipt.ParsedReceipt
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /**
  * A receipt line the user has approved, after any edits made on the review screen.
@@ -90,13 +90,12 @@ class InventoryRepository(
     suspend fun expiringBy(date: LocalDate): List<FoodItem> = foodItemDao.expiringBy(date)
 
     /** Manual save. New items go through the merge path; edits update in place. */
-    suspend fun save(item: FoodItem): MergeOutcome =
-        if (item.id == 0L) {
-            addOrMerge(item)
-        } else {
-            foodItemDao.update(item)
-            MergeOutcome.Updated(item.id)
-        }
+    suspend fun save(item: FoodItem): MergeOutcome = if (item.id == 0L) {
+        addOrMerge(item)
+    } else {
+        foodItemDao.update(item)
+        MergeOutcome.Updated(item.id)
+    }
 
     suspend fun delete(item: FoodItem) = foodItemDao.delete(item)
 
@@ -190,21 +189,18 @@ class InventoryRepository(
      *
      * @return the id of the logged event, for undo.
      */
-    suspend fun useAmount(
-        item: FoodItem,
-        amount: Double,
-        on: LocalDate = LocalDate.now()
-    ): Long = transactions.run {
-        val consumed = minOf(amount, item.quantity)
-        val eventId = record(item, consumed, FinishReason.USED, on)
-        val remaining = item.quantity - amount
-        if (remaining > 0.0001) {
-            foodItemDao.updateQuantity(item.id, remaining)
-        } else {
-            foodItemDao.markFinished(item.id, on, FinishReason.USED)
+    suspend fun useAmount(item: FoodItem, amount: Double, on: LocalDate = LocalDate.now()): Long =
+        transactions.run {
+            val consumed = minOf(amount, item.quantity)
+            val eventId = record(item, consumed, FinishReason.USED, on)
+            val remaining = item.quantity - amount
+            if (remaining > 0.0001) {
+                foodItemDao.updateQuantity(item.id, remaining)
+            } else {
+                foodItemDao.markFinished(item.id, on, FinishReason.USED)
+            }
+            eventId
         }
-        eventId
-    }
 
     /** Snapshots the item into the log. See [ConsumptionEvent] for why it is a snapshot. */
     private suspend fun record(
@@ -349,8 +345,11 @@ class InventoryRepository(
                 purchaseId = purchaseId
             )
             addOrMerge(
-                if (entry.storageArea != null) draft.copy(storageArea = entry.storageArea)
-                else draft
+                if (entry.storageArea != null) {
+                    draft.copy(storageArea = entry.storageArea)
+                } else {
+                    draft
+                }
             )
         }
         purchaseId

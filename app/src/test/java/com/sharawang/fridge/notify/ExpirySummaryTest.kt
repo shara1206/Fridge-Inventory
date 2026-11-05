@@ -1,9 +1,9 @@
 package com.sharawang.fridge.notify
 
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.time.LocalDate
 
 class ExpirySummaryTest {
 

@@ -53,8 +53,11 @@ class SettingsViewModel(
         }
         viewModelScope.launch {
             settingsRepository.setEnabled(enabled)
-            if (enabled) scheduler.schedule(settingsRepository.settings.first().hour)
-            else scheduler.cancel()
+            if (enabled) {
+                scheduler.schedule(settingsRepository.settings.first().hour)
+            } else {
+                scheduler.cancel()
+            }
         }
     }
 
@@ -103,17 +106,18 @@ class SettingsViewModel(
         _busy.value = false
     }
 
-    fun clearBackupResult() { _backupResult.value = null }
+    fun clearBackupResult() {
+        _backupResult.value = null
+    }
 
     companion object {
         fun factory(container: AppContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                SettingsViewModel(
-                    container.settingsRepository,
-                    container.reminderScheduler,
-                    container.backupRepository
-                ) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = SettingsViewModel(
+                container.settingsRepository,
+                container.reminderScheduler,
+                container.backupRepository
+            ) as T
         }
     }
 }

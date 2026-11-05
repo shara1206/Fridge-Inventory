@@ -11,6 +11,7 @@ import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.data.local.daysLeft
 import com.sharawang.fridge.data.repo.InventoryRepository
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 /**
  * How far ahead the list looks. One number so the header count and the row chips can never
@@ -93,18 +93,28 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
                     .filter { candidate -> items.any { it.store == candidate } }
                     .takeIf { it.size > 1 }
                     .orEmpty(),
-                expiringSoon = items.count { (it.daysLeft(today) ?: Long.MAX_VALUE) in 0..DUE_SOON_DAYS },
+                expiringSoon = items.count {
+                    (it.daysLeft(today) ?: Long.MAX_VALUE) in 0..DUE_SOON_DAYS
+                },
                 expired = items.count { (it.daysLeft(today) ?: Long.MAX_VALUE) < 0 }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InventoryUiState())
 
-    fun setQuery(value: String) { query.value = value }
+    fun setQuery(value: String) {
+        query.value = value
+    }
 
-    fun setArea(value: StorageArea?) { area.value = value }
+    fun setArea(value: StorageArea?) {
+        area.value = value
+    }
 
-    fun setCategory(value: FoodCategory?) { category.value = value }
+    fun setCategory(value: FoodCategory?) {
+        category.value = value
+    }
 
-    fun setStore(value: Store?) { store.value = value }
+    fun setStore(value: Store?) {
+        store.value = value
+    }
 
     /**
      * The + and − on a row are *events*, not edits to a number: + means you bought another
@@ -139,7 +149,9 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
     }
 
     /** Called once the snackbar is gone, so a stale undo cannot fire later. */
-    fun clearUndo() { _lastConsumption.value = null }
+    fun clearUndo() {
+        _lastConsumption.value = null
+    }
 
     companion object {
         fun factory(container: AppContainer) = object : ViewModelProvider.Factory {

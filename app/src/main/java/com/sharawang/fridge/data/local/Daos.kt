@@ -5,8 +5,8 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FoodItemDao {
@@ -39,7 +39,9 @@ interface FoodItemDao {
     )
     fun search(query: String): Flow<List<FoodItem>>
 
-    @Query("SELECT * FROM food_items WHERE finishedOn IS NOT NULL ORDER BY finishedOn DESC LIMIT 200")
+    @Query(
+        "SELECT * FROM food_items WHERE finishedOn IS NOT NULL ORDER BY finishedOn DESC LIMIT 200"
+    )
     fun observeHistory(): Flow<List<FoodItem>>
 
     /** Everything ever recorded, finished or not. Backup export reads through this. */

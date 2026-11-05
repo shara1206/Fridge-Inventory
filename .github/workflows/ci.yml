@@ -48,9 +48,7 @@ jobs:
       - name: Unit tests
         run: ./gradlew testDebugUnitTest --no-daemon --stacktrace
 
-      # Style only — deliberately non-blocking until the baseline is clean.
       - name: ktlint
-        continue-on-error: true
         run: ./gradlew ktlintCheck --no-daemon
 
       - name: Android Lint

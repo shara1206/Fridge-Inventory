@@ -6,8 +6,8 @@ import androidx.work.WorkerParameters
 import com.sharawang.fridge.data.SettingsRepository
 import com.sharawang.fridge.data.local.AppDatabase
 import com.sharawang.fridge.data.repo.InventoryRepository
-import kotlinx.coroutines.flow.first
 import java.time.LocalDate
+import kotlinx.coroutines.flow.first
 
 /**
  * Runs once a day. Reads the settings first and bails out early if reminders are off, so a

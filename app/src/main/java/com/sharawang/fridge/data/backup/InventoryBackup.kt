@@ -6,9 +6,9 @@ import com.sharawang.fridge.data.local.FoodCategory
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.data.local.Store
+import java.time.LocalDate
 import org.json.JSONArray
 import org.json.JSONObject
-import java.time.LocalDate
 
 /** Raised when a file the user picked is not a backup this app can read. */
 class BackupFormatException(message: String) : Exception(message)

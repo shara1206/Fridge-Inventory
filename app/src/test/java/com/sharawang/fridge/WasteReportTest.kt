@@ -5,10 +5,10 @@ import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodCategory
 import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.data.repo.WasteReport
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.time.LocalDate
 
 class WasteReportTest {
 

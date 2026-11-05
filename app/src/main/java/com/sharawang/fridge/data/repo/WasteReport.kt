@@ -46,13 +46,17 @@ data class WasteReport(
                 discardedByCategory = discarded
                     .groupBy { it.category }
                     .map { (category, rows) -> category to rows.sumOf { it.quantity } }
-                    .sortedWith(compareByDescending<Pair<FoodCategory, Double>> { it.second }
-                        .thenBy { it.first.ordinal }),
+                    .sortedWith(
+                        compareByDescending<Pair<FoodCategory, Double>> { it.second }
+                            .thenBy { it.first.ordinal }
+                    ),
                 discardedByStore = discarded
                     .groupBy { it.store }
                     .map { (store, rows) -> store to rows.sumOf { it.quantity } }
-                    .sortedWith(compareByDescending<Pair<Store, Double>> { it.second }
-                        .thenBy { it.first.ordinal })
+                    .sortedWith(
+                        compareByDescending<Pair<Store, Double>> { it.second }
+                            .thenBy { it.first.ordinal }
+                    )
             )
         }
     }

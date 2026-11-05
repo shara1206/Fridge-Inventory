@@ -77,6 +77,9 @@ real one starts ML Kit, which cannot run under Robolectric.
 - **Business logic stays out of composables.** It belongs in a ViewModel or the repository.
 - **Quiet defaults.** Expiry is optional and starts empty, reminders are off, and the
   notification permission is requested only when reminders are turned on.
+- **History** shows the whole consumption log (no cap), grouped into Monday-start weeks by
+  `occurredOn`, filterable to eaten or thrown out. Grouping and filtering live in
+  `HistoryViewModel`; entries with a null reason only appear under "all".
 - **List −/+ are events.** They write a `ConsumptionEvent` or move the purchase date. In
   the editor the same buttons are corrections that write no history. Undo deletes the event;
   it never logs a compensating one.

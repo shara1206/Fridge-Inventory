@@ -122,7 +122,11 @@
     <!-- History and waste -->
     <string name="title_history">History</string>
     <string name="history_empty">Nothing has left the kitchen yet.</string>
-    <string name="history_hint">Every − and ✓ on the list is logged here.</string>
+    <string name="history_hint">Every −, ✓ and bin on the list is logged here.</string>
+    <string name="history_empty_filtered">Nothing like that has been logged.</string>
+    <string name="history_this_week">This week</string>
+    <string name="history_last_week">Last week</string>
+    <string name="history_week_range">%1$s – %2$s</string>
     <string name="waste_window">Last 30 days</string>
     <string name="waste_eaten">%1$s eaten</string>
     <string name="waste_thrown">%1$s thrown out</string>

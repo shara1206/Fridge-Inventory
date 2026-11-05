@@ -139,12 +139,15 @@ interface PurchaseDao {
 @Dao
 interface ConsumptionEventDao {
 
-    /** The log, newest first. Bounded because nobody scrolls a year back. */
+    /**
+     * The whole log, newest first. Unbounded on purpose: the history screen is where the
+     * user looks back at what was eaten and when, and a cap silently hid the oldest weeks.
+     * One kitchen's log stays small enough to hold in memory.
+     */
     @Query(
         """
         SELECT * FROM consumption_events
         ORDER BY occurredOn DESC, recordedAt DESC, id DESC
-        LIMIT 200
         """
     )
     fun observeRecent(): Flow<List<ConsumptionEvent>>

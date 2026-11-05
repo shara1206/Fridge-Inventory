@@ -15,11 +15,7 @@ import com.sharawang.fridge.receipt.ReceiptScanner
  */
 class AppContainer(context: Context) {
     private val database = AppDatabase.get(context)
-    val repository = InventoryRepository(
-        database.foodItemDao(),
-        database.purchaseDao(),
-        database.consumptionEventDao()
-    )
+    val repository = InventoryRepository(database)
     val scanner = ReceiptScanner()
     val settingsRepository = SettingsRepository(context.applicationContext)
     val reminderScheduler = ReminderScheduler(context.applicationContext)

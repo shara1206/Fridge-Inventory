@@ -38,11 +38,7 @@ class InventoryScreenTest {
         database = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        repository = InventoryRepository(
-            database.foodItemDao(),
-            database.purchaseDao(),
-            database.consumptionEventDao()
-        )
+        repository = InventoryRepository(database)
     }
 
     @After

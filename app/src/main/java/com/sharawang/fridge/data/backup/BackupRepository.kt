@@ -62,8 +62,14 @@ class BackupRepository(
      * Finished rows are history and simply appended — merging them would rewrite the past.
      * Live rows go through the same merge path as a repeat purchase, so importing a backup
      * onto a kitchen that already has spinach in it reads as "2 spinach", not two lines.
+     *
+     * One transaction for the whole file: a failure on row 40 should not leave 39 of them
+     * imported, because importing the same file again would then double those 39.
      */
-    private suspend fun merge(items: List<FoodItem>, events: List<ConsumptionEvent>) {
+    private suspend fun merge(
+        items: List<FoodItem>,
+        events: List<ConsumptionEvent>
+    ): Unit = repository.inTransaction {
         val (history, live) = items.partition { it.isFinished }
         if (history.isNotEmpty()) repository.insertAll(history)
         live.forEach { repository.addOrMerge(it) }

@@ -1,6 +1,7 @@
 package com.sharawang.fridge.data.repo
 
 import com.sharawang.fridge.data.ShelfLife
+import com.sharawang.fridge.data.local.AppDatabase
 import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.ConsumptionEventDao
 import com.sharawang.fridge.data.local.FinishReason
@@ -40,12 +41,29 @@ sealed interface MergeOutcome {
     data class Updated(override val id: Long) : MergeOutcome
 }
 
-/** Single entry point to the local database. No network, ever. */
+/**
+ * Single entry point to the local database. No network, ever.
+ *
+ * Every public method that writes more than once runs inside [transactions], so a crash or
+ * a constraint failure part-way through leaves the database as it was rather than half
+ * updated. That matters most for [replaceAll], which deletes everything before inserting.
+ */
 class InventoryRepository(
     private val foodItemDao: FoodItemDao,
     private val purchaseDao: PurchaseDao,
-    private val consumptionEventDao: ConsumptionEventDao
+    private val consumptionEventDao: ConsumptionEventDao,
+    private val transactions: TransactionRunner
 ) {
+
+    constructor(database: AppDatabase) : this(
+        database.foodItemDao(),
+        database.purchaseDao(),
+        database.consumptionEventDao(),
+        RoomTransactionRunner(database)
+    )
+
+    /** For callers outside the repository that need several of its writes to land together. */
+    suspend fun <R> inTransaction(block: suspend () -> R): R = transactions.run(block)
 
     fun activeItems(): Flow<List<FoodItem>> = foodItemDao.observeActive()
 
@@ -93,12 +111,12 @@ class InventoryRepository(
         id: Long,
         reason: FinishReason,
         on: LocalDate = LocalDate.now()
-    ): Long? {
-        val item = foodItemDao.getById(id) ?: return null
-        if (item.isFinished) return null
+    ): Long? = transactions.run {
+        val item = foodItemDao.getById(id) ?: return@run null
+        if (item.isFinished) return@run null
         val eventId = record(item, item.quantity, reason, on)
         foodItemDao.markFinished(id, on, reason)
-        return eventId
+        eventId
     }
 
     /**
@@ -109,8 +127,8 @@ class InventoryRepository(
      * The quantity comes off the event, not off the item, because finishing can happen
      * after a partial use and putting back the original amount would quietly invent food.
      */
-    suspend fun undoConsumption(eventId: Long) {
-        val event = consumptionEventDao.getById(eventId) ?: return
+    suspend fun undoConsumption(eventId: Long): Unit = transactions.run {
+        val event = consumptionEventDao.getById(eventId) ?: return@run
         val item = event.itemId?.let { foodItemDao.getById(it) }
         if (item != null) {
             if (item.isFinished) {
@@ -147,7 +165,10 @@ class InventoryRepository(
      * The log is cleared alongside the items: leaving it would attach the old kitchen's
      * history to the new one, and its itemIds would point at rows that no longer exist.
      */
-    suspend fun replaceAll(items: List<FoodItem>, events: List<ConsumptionEvent> = emptyList()) {
+    suspend fun replaceAll(
+        items: List<FoodItem>,
+        events: List<ConsumptionEvent> = emptyList()
+    ): Unit = transactions.run {
         foodItemDao.deleteAll()
         consumptionEventDao.deleteAll()
         foodItemDao.insertAll(items)
@@ -173,7 +194,7 @@ class InventoryRepository(
         item: FoodItem,
         amount: Double,
         on: LocalDate = LocalDate.now()
-    ): Long {
+    ): Long = transactions.run {
         val consumed = minOf(amount, item.quantity)
         val eventId = record(item, consumed, FinishReason.USED, on)
         val remaining = item.quantity - amount
@@ -182,7 +203,7 @@ class InventoryRepository(
         } else {
             foodItemDao.markFinished(item.id, on, FinishReason.USED)
         }
-        return eventId
+        eventId
     }
 
     /** Snapshots the item into the log. See [ConsumptionEvent] for why it is a snapshot. */
@@ -234,9 +255,9 @@ class InventoryRepository(
      * The surviving row keeps the *earlier* expiry date: the older stock is the one that
      * needs eating first, so warning early is the safe direction to round.
      */
-    suspend fun addOrMerge(item: FoodItem): MergeOutcome {
+    suspend fun addOrMerge(item: FoodItem): MergeOutcome = transactions.run {
         val existing = foodItemDao.findActiveMatch(item.name, item.storageArea)
-            ?: return MergeOutcome.Inserted(foodItemDao.insert(item))
+            ?: return@run MergeOutcome.Inserted(foodItemDao.insert(item))
 
         val mergedExpiry = listOfNotNull(existing.expiresOn, item.expiresOn).minOrNull()
         foodItemDao.update(
@@ -247,7 +268,7 @@ class InventoryRepository(
                 purchasedOn = maxOf(existing.purchasedOn, item.purchasedOn)
             )
         )
-        return MergeOutcome.Merged(existing.id)
+        MergeOutcome.Merged(existing.id)
     }
 
     private fun sumPrices(a: Int?, b: Int?): Int? =
@@ -284,10 +305,6 @@ class InventoryRepository(
 
     /**
      * Persists a reviewed receipt: the receipt itself, every parsed line for later
-     * debugging, and one [FoodItem] per line the user kept.
-     */
-    /**
-     * Persists a reviewed receipt: the receipt itself, every parsed line for later
      * debugging, and one [FoodItem] per entry the user kept (merged into an existing row
      * where one matches).
      */
@@ -295,7 +312,7 @@ class InventoryRepository(
         receipt: ParsedReceipt,
         entries: List<ReceiptEntry>,
         imagePath: String? = null
-    ): Long {
+    ): Long = transactions.run {
         val purchaseId = purchaseDao.insert(
             Purchase(
                 store = receipt.store,
@@ -336,6 +353,6 @@ class InventoryRepository(
                 else draft
             )
         }
-        return purchaseId
+        purchaseId
     }
 }

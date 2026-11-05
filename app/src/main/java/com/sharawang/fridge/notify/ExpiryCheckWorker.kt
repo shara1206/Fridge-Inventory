@@ -24,11 +24,7 @@ class ExpiryCheckWorker(
 
         val today = LocalDate.now()
         val database = AppDatabase.get(context)
-        val repository = InventoryRepository(
-            database.foodItemDao(),
-            database.purchaseDao(),
-            database.consumptionEventDao()
-        )
+        val repository = InventoryRepository(database)
         val items = repository.expiringBy(today.plusDays(settings.leadDays.toLong()))
 
         val summary = ExpirySummary.build(

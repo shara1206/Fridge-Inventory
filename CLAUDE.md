@@ -60,6 +60,9 @@ real one starts ML Kit, which cannot run under Robolectric.
   a constant is a schema change: bump the `AppDatabase` version, add a `Migration` to
   `ALL_MIGRATIONS`, and add a case to `MigrationTest`. Hand-written migration SQL must match
   Room's generated schema exactly. Never use `fallbackToDestructiveMigration`.
+  `MigrationSchemaTest` opens a real v2 file with Room so its schema check runs in CI; add
+  the new version's starting DDL there when you add a migration. Room exports schema JSON to
+  `app/schemas/` on every build: commit it.
 - **Money is `Int` cents, calendar days are `LocalDate`.** No `Double` money and no `Long`
   timestamps for dates. Quantity is a bare `Double` count; `FoodItem.unit` is vestigial.
 - **Derived values go in extension functions** (`isFinished`, `daysLeft`), not in getters

@@ -216,9 +216,15 @@ class MigrationTest {
         MIGRATION_2_3.migrate(db)
 
         assertEquals(
-            listOf(listOf("Spinach", "2.0", "DISCARDED", "2026-07-10", "499")),
-            events(db, "name, quantity, reason, occurredOn, valueCents")
+            listOf(listOf("Spinach", "DISCARDED", "2026-07-10", "499")),
+            events(db, "name, reason, occurredOn, valueCents")
         )
+        // Read as a number: how SQLite renders a REAL as text ("2.0" or "2") differs between
+        // the SQLite builds behind different Android versions.
+        db.query("SELECT quantity FROM consumption_events").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(2.0, cursor.getDouble(0), 0.0001)
+        }
         db.close()
     }
 

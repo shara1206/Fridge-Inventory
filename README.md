@@ -73,6 +73,12 @@ Open the folder in Android Studio (Ladybug or newer) and let it sync. The Gradle
 ./gradlew installDebug
 ```
 
+Debug builds are signed with a shared key when one is configured, so a new APK installs over
+the old one and keeps its data. Put a `keystore.properties` at the repo root (it is
+gitignored) with `storeFile`, `storePassword`, `keyAlias` and `keyPassword`; CI reads the
+same key from the `FRIDGE_KEYSTORE_BASE64` and `FRIDGE_KEYSTORE_PASSWORD` repository secrets.
+Without either, the machine's default debug key is used.
+
 Every push and pull request runs the unit tests, Android Lint and a debug build via
 [GitHub Actions](.github/workflows/ci.yml); the debug APK and both reports are uploaded as
 build artifacts. The workflow runs the committed wrapper.

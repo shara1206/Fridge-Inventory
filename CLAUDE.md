@@ -24,6 +24,11 @@ SDK with `platforms;android-35` and `build-tools;35.0.0` (AGP 8.5.2 also wants
 - The Gradle wrapper is committed and pinned to 8.9
   (`gradle/wrapper/gradle-wrapper.properties`). CI (`.github/workflows/ci.yml`) runs it on
   JDK 21 and fails if the SDK cannot be installed.
+- Debug builds are signed with one shared key so updates install over the old copy. It
+  comes from `keystore.properties` at the repo root (gitignored; `storeFile`,
+  `storePassword`, `keyAlias`, `keyPassword`) or, in CI, from the `FRIDGE_KEYSTORE_BASE64`
+  and `FRIDGE_KEYSTORE_PASSWORD` secrets. Without either it falls back to the default debug
+  key. Never commit the keystore or its password.
 - Dependency versions live only in `gradle/libs.versions.toml`. Add new libraries there and
   reference them as `libs.*`.
 - Network: Google Maven (`maven.google.com`) redirects to `dl.google.com`, so that host has

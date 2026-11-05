@@ -5,3 +5,8 @@
 *.png binary
 *.jpg binary
 *.webp binary
+
+# Gradle wrapper: the JAR is binary, the scripts need their platform's line endings.
+*.jar binary
+gradlew text eol=lf
+*.bat text eol=crlf

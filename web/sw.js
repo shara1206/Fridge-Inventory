@@ -1,7 +1,7 @@
 // Caches the app shell so it opens with no connection. The app never fetches data from
 // anywhere; this only serves its own files. Bump VERSION whenever a file below changes, so
 // phones pick up the new copy on their next visit.
-const VERSION = 'fridge-v1';
+const VERSION = 'fridge-v2';
 const FILES = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const FILES = [
   './js/app.js',
   './js/backup.js',
   './js/i18n.js',
+  './js/labels.js',
   './js/model.js',
   './js/parsers.js',
   './js/receipt-text.js',

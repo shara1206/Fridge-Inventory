@@ -5,7 +5,7 @@
 // Nothing here touches the DOM or storage, so it all tests in Node.
 
 import { guess } from './shelf-life.js';
-import { CATEGORIES, STORES, addDays, today, weekStart } from './model.js';
+import { CATEGORIES, STORES, addDays, daysBetween, today, weekStart } from './model.js';
 
 export function emptyState() {
   return { nextId: 1, items: [], events: [], purchases: [], lastBackupOn: null };
@@ -230,6 +230,22 @@ export function mergeImport(state, items, events) {
     else addOrMerge(state, { ...it, id: 0 });
   }
   for (const e of events) state.events.push({ ...e, id: newId(state), itemId: null });
+}
+
+// ---- backup reminder -----------------------------------------------------------
+
+/** Same rule as Android's InventoryViewModel.backupReminder. */
+export const BACKUP_REMIND_DAYS = 14;
+
+/**
+ * @returns null when no nudge is due (nothing in the kitchen, or a backup in the last two
+ * weeks), else { lastBackupOn } with null meaning never backed up.
+ */
+export function backupReminder(state, on = today()) {
+  if (activeItems(state).length === 0) return null;
+  const last = state.lastBackupOn;
+  if (last && daysBetween(last, on) < BACKUP_REMIND_DAYS) return null;
+  return { lastBackupOn: last ?? null };
 }
 
 // ---- history -----------------------------------------------------------------

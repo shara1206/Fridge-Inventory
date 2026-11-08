@@ -87,7 +87,11 @@ class SettingsViewModel(
 
     fun suggestedFileName(): String = backupRepository.suggestedFileName()
 
-    fun export(uri: Uri) = runBackup { BackupResult.Exported(backupRepository.exportTo(uri)) }
+    fun export(uri: Uri) = runBackup {
+        val count = backupRepository.exportTo(uri)
+        settingsRepository.markBackedUp()
+        BackupResult.Exported(count)
+    }
 
     fun suggestedReceiptTextFileName(): String = backupRepository.suggestedReceiptTextFileName()
 

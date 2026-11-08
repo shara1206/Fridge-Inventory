@@ -255,3 +255,57 @@ dialog h2 { font-size: 18px; }
 
 .chips .text-btn { padding: 6px 8px; }
 .chips .text-btn:first-child { padding-left: 0; }
+
+/* ---- zone labels ---- */
+.section-title { font-size: 16px; font-weight: 650; margin-top: 6px; }
+.label-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.label-card {
+  position: relative; display: flex; flex-direction: column; gap: 4px;
+  padding: 10px; border-radius: 14px; background: var(--fill); color: #5D5750; min-height: 130px;
+}
+.label-chip {
+  align-self: flex-start; padding: 2px 9px; border-radius: 10px;
+  background: var(--chip); color: #fff; font-size: 12px;
+}
+.label-heading { font-size: 17px; font-weight: 500; color: #5D5750; }
+.label-panel { flex: 1; background: #fff; border-radius: 8px; padding: 7px 9px; color: #4F4A45; }
+.label-lines { list-style: none; margin: 0; padding: 0; font-size: 13px; line-height: 1.35; }
+.label-lines.two { columns: 2; column-gap: 10px; font-size: 12px; }
+.label-lines li { break-inside: avoid; overflow-wrap: anywhere; }
+.label-empty { color: #9A948B; font-size: 13px; }
+.label-panel .rule { display: block; height: 0; margin: 11px 4px 0; border-top: 0.6pt dashed #CFCBC4; }
+
+#print-root { display: none; }
+
+@media print {
+  @page { size: A4; margin: 0; }
+  html, body { background: #fff !important; }
+  #app, #snack { display: none !important; }
+  #print-root { display: block; }
+  /* Positions in points, the same as LabelPdf.kt: 595 × 842 page, two columns of five. */
+  .print-page {
+    position: relative; width: 595pt; height: 842pt; overflow: hidden;
+    break-after: page; page-break-after: always;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .print-page:last-child { break-after: auto; page-break-after: auto; }
+  .print-page .label-card {
+    position: absolute; width: 242.7pt; height: 129.3pt; min-height: 0;
+    padding: 9.1pt 11.4pt 8.5pt; gap: 3pt; border-radius: 12pt;
+    outline: 0.5pt dashed #D8D4CD; outline-offset: 6.2pt;
+  }
+  .print-page .label-card:nth-child(odd) { left: 37.4pt; }
+  .print-page .label-card:nth-child(even) { left: 315.2pt; }
+  .print-page .label-card:nth-child(1), .print-page .label-card:nth-child(2) { top: 47.3pt; }
+  .print-page .label-card:nth-child(3), .print-page .label-card:nth-child(4) { top: 201.8pt; }
+  .print-page .label-card:nth-child(5), .print-page .label-card:nth-child(6) { top: 356.3pt; }
+  .print-page .label-card:nth-child(7), .print-page .label-card:nth-child(8) { top: 510.8pt; }
+  .print-page .label-card:nth-child(9), .print-page .label-card:nth-child(10) { top: 665.3pt; }
+  .print-page .label-chip { font-size: 9pt; padding: 1.5pt 8pt; border-radius: 8.5pt; }
+  .print-page .label-heading { font-size: 18pt; font-weight: 400; line-height: 1.1; }
+  .print-page .label-panel { border-radius: 8pt; padding: 6pt 9pt; overflow: hidden; }
+  .print-page .label-lines { font-size: 9.6pt; line-height: 11.4pt; }
+  .print-page .label-lines.two { font-size: 8.4pt; line-height: 10pt; }
+  .print-page .blank .label-panel { margin-top: 6.9pt; }
+  .print-page .label-panel .rule { margin: 11pt 1pt 0; }
+}

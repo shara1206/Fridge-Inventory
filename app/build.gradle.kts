@@ -75,6 +75,11 @@ android {
     buildFeatures {
         compose = true
     }
+    // Lists English and Chinese to the system, so Android 13+ offers a per-app language
+    // under Settings > Apps > Fridge > Language. The web app has its own language switch.
+    androidResources {
+        generateLocaleConfig = true
+    }
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"

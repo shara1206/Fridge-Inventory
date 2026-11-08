@@ -39,6 +39,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -75,6 +76,7 @@ fun InventoryScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lastConsumption by viewModel.lastConsumption.collectAsStateWithLifecycle()
+    val backupReminder by viewModel.backupReminder.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val undoLabel = stringResource(R.string.action_undo)
     // Formatted through the Context because LaunchedEffect is not a composable scope.
@@ -180,6 +182,10 @@ fun InventoryScreen(
                         contentDescription = stringResource(R.string.inventory_scan)
                     )
                 }
+            }
+
+            backupReminder?.let { reminder ->
+                BackupBanner(reminder, onBackUp = onOpenSettings)
             }
 
             FilterRow(
@@ -411,3 +417,29 @@ private fun ExpiryChip(item: FoodItem) {
 
 private fun trim(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else value.toString()
+
+/** The data lives only on this phone, and uninstalling deletes it, so nudge for a backup. */
+@Composable
+private fun BackupBanner(reminder: BackupReminder, onBackUp: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(start = 14.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                reminder.lastBackupOn
+                    ?.let { stringResource(R.string.backup_reminder_since, it.toString()) }
+                    ?: stringResource(R.string.backup_reminder_never),
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f).padding(vertical = 10.dp)
+            )
+            TextButton(onClick = onBackUp) {
+                Text(stringResource(R.string.backup_reminder_action))
+            }
+        }
+    }
+}

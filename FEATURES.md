@@ -12,7 +12,7 @@ or should not have it, the change updates this table instead, with the reason.
 | **Inventory** | | | |
 | List sorted by expiry, undated last | ✅ | ✅ | |
 | Filter by storage area and by category (only categories present) | ✅ | ✅ | |
-| Filter by store (hidden below two stores) | ✅ | ❌ | Web: not ported yet |
+| Filter by store (hidden below two stores) | ✅ | ✅ | |
 | Search by name | ✅ | ✅ | |
 | Badge only within 7 days of expiry or past it | ✅ | ✅ | `DUE_SOON_DAYS` on both |
 | − logs "ate one"; + is "bought another" and moves the purchase date | ✅ | ✅ | |
@@ -38,10 +38,10 @@ or should not have it, the change updates this table instead, with the reason.
 | Undo any single entry | ✅ | ✅ | |
 | **Data** | | | |
 | Backup export and import (merge or replace) | ✅ | ✅ | Same JSON format, both directions |
-| Reminder banner when no recent backup | ❌ | ✅ | Web data lives only in the browser, so it nags |
+| Reminder banner when there is no backup from the last 14 days | ✅ | ✅ | Uninstalling Android, or clearing Safari data, deletes everything |
 | **Other** | | | |
 | Daily expiry notification | ✅ | ❌ | Web push needs a server; the app talks to none |
-| Printable zone labels (A4 PDF) | ✅ | ❌ | Web: not ported yet |
-| English and Chinese | ✅ | ✅ | Android follows the system; web also has a language switch |
+| Printable zone labels (A4, ten cards a page) | ✅ | ✅ | Android writes a PDF; web prints, or saves as PDF from the print screen |
+| English and Chinese, with a per-app language choice | ✅ | ✅ | Android 13+: Settings › Apps › Fridge › Language; web: its own Settings |
 | Light and dark theme, Morandi palette | ✅ | ✅ | |
 | Works offline, no network access | ✅ | ✅ | |

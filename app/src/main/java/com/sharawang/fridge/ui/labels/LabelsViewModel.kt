@@ -50,7 +50,9 @@ class LabelsViewModel(private val labels: LabelRepository) : ViewModel() {
         _busy.value = false
     }
 
-    fun clearResult() { _result.value = null }
+    fun clearResult() {
+        _result.value = null
+    }
 
     companion object {
         fun factory(container: AppContainer) = object : ViewModelProvider.Factory {

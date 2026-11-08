@@ -5,8 +5,8 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FoodItemDao {
@@ -39,7 +39,9 @@ interface FoodItemDao {
     )
     fun search(query: String): Flow<List<FoodItem>>
 
-    @Query("SELECT * FROM food_items WHERE finishedOn IS NOT NULL ORDER BY finishedOn DESC LIMIT 200")
+    @Query(
+        "SELECT * FROM food_items WHERE finishedOn IS NOT NULL ORDER BY finishedOn DESC LIMIT 200"
+    )
     fun observeHistory(): Flow<List<FoodItem>>
 
     /** Everything ever recorded, finished or not. Backup export reads through this. */
@@ -137,12 +139,15 @@ interface PurchaseDao {
 @Dao
 interface ConsumptionEventDao {
 
-    /** The log, newest first. Bounded because nobody scrolls a year back. */
+    /**
+     * The whole log, newest first. Unbounded on purpose: the history screen is where the
+     * user looks back at what was eaten and when, and a cap silently hid the oldest weeks.
+     * One kitchen's log stays small enough to hold in memory.
+     */
     @Query(
         """
         SELECT * FROM consumption_events
         ORDER BY occurredOn DESC, recordedAt DESC, id DESC
-        LIMIT 200
         """
     )
     fun observeRecent(): Flow<List<ConsumptionEvent>>

@@ -11,12 +11,12 @@ import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.data.repo.InventoryRepository
 import com.sharawang.fridge.data.repo.MergeOutcome
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 
 data class EditUiState(
     val id: Long = 0,
@@ -44,7 +44,8 @@ data class EditUiState(
 
     /** Blank is not an error yet — the save button is simply disabled. */
     val quantityError: Boolean
-        get() = quantityText.isNotBlank() && (quantityText.toDoubleOrNull()?.let { it <= 0 } ?: true)
+        get() = quantityText.isNotBlank() &&
+            (quantityText.toDoubleOrNull()?.let { it <= 0 } ?: true)
 
     val priceError: Boolean
         get() = priceText.isNotBlank() && (priceText.toDoubleOrNull()?.let { it < 0 } ?: true)

@@ -351,11 +351,7 @@ private fun ItemRow(
  * simply wrong is the edit screen's job; that path logs nothing.
  */
 @Composable
-private fun QuantityStepper(
-    quantity: Double,
-    onDecrease: () -> Unit,
-    onIncrease: () -> Unit
-) {
+private fun QuantityStepper(quantity: Double, onDecrease: () -> Unit, onIncrease: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         FilledTonalIconButton(
             onClick = onDecrease,

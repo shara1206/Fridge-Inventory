@@ -2,7 +2,7 @@
 
 ## Setup
 
-Open the repo in Android Studio (Ladybug or newer) and let it sync. Requires JDK 17.
+Open the repo in Android Studio (Ladybug or newer) and let it sync. Requires JDK 21 (Robolectric needs it for API 35 tests).
 
 ```bash
 ./gradlew testDebugUnitTest   # parser + shelf-life tests, no device needed
@@ -10,8 +10,7 @@ Open the repo in Android Studio (Ladybug or newer) and let it sync. Requires JDK
 ./gradlew installDebug        # onto a connected device
 ```
 
-If `gradle-wrapper.jar` is not in the repo yet, Android Studio generates it on first sync
-(or run `gradle wrapper` once). CI works either way.
+The Gradle wrapper is committed; CI runs the same `./gradlew`.
 
 ## Two rules that are not negotiable
 

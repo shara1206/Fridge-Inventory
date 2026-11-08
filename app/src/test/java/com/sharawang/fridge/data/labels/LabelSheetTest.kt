@@ -4,11 +4,11 @@ import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodCategory
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.StorageArea
+import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
 
 /**
  * Pure JVM: [LabelSheet] deliberately knows nothing about Android, because deciding which

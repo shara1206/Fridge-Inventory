@@ -51,7 +51,9 @@ class ExpiryNotifier(private val context: Context) {
 
     internal fun formatTitle(summary: ExpirySummary.Summary): String = when {
         summary.expiredCount > 0 && summary.dueSoonCount > 0 -> context.getString(
-            R.string.notif_title_both, summary.expiredCount, summary.dueSoonCount
+            R.string.notif_title_both,
+            summary.expiredCount,
+            summary.dueSoonCount
         )
         summary.expiredCount > 0 ->
             context.getString(R.string.notif_title_expired, summary.expiredCount)

@@ -3,12 +3,14 @@ package com.sharawang.fridge.data.repo
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.sharawang.fridge.data.local.AppDatabase
+import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.FinishReason
 import com.sharawang.fridge.data.local.FoodCategory
 import com.sharawang.fridge.data.local.StorageArea
 import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.receipt.ParsedLine
 import com.sharawang.fridge.receipt.ParsedReceipt
+import java.time.LocalDate
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -20,10 +22,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.LocalDate
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [35])
 class InventoryRepositoryTest {
 
     private lateinit var database: AppDatabase
@@ -37,11 +38,7 @@ class InventoryRepositoryTest {
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java
         ).allowMainThreadQueries().build()
-        repository = InventoryRepository(
-            database.foodItemDao(),
-            database.purchaseDao(),
-            database.consumptionEventDao()
-        )
+        repository = InventoryRepository(database)
     }
 
     @After
@@ -378,5 +375,43 @@ class InventoryRepositoryTest {
         repository.save(repository.item(id)!!.copy(quantity = 2.0))
 
         assertTrue(repository.history().first().isEmpty())
+    }
+
+    // ---- atomicity ----------------------------------------------------------
+
+    @Test
+    fun `a restore that fails part-way leaves the old kitchen untouched`() = runTest {
+        repository.save(repository.draftFor("Tofu"))
+        repository.save(repository.draftFor("Kimchi"))
+
+        // Two events sharing a primary key: the second insert fails after the delete and
+        // the item insert have already run inside the same transaction.
+        val clash = ConsumptionEvent(id = 7, name = "Milk")
+        val failed = runCatching {
+            repository.replaceAll(
+                items = listOf(repository.draftFor("Spinach")),
+                events = listOf(clash, clash)
+            )
+        }
+
+        assertTrue(failed.isFailure)
+        assertEquals(
+            listOf("Kimchi", "Tofu"),
+            repository.allItems().map { it.name }.sorted()
+        )
+        assertTrue(repository.allEvents().isEmpty())
+    }
+
+    @Test
+    fun `a restore that succeeds replaces both items and log`() = runTest {
+        repository.save(repository.draftFor("Tofu"))
+
+        repository.replaceAll(
+            items = listOf(repository.draftFor("Spinach")),
+            events = listOf(ConsumptionEvent(name = "Milk"))
+        )
+
+        assertEquals(listOf("Spinach"), repository.allItems().map { it.name })
+        assertEquals(listOf("Milk"), repository.allEvents().map { it.name })
     }
 }

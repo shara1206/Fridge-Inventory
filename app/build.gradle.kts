@@ -62,11 +62,12 @@ ksp {
 }
 
 ktlint {
+    // Pinned so the CLI, the plugin and .editorconfig all agree on the rule set.
+    version.set("1.0.1")
     android.set(true)
-    // Starts permissive on purpose: the first run on an unformatted codebase reports plenty,
-    // and a style rule should never be what stops a build from producing an APK. Flip this to
-    // false once `gradle ktlintFormat` has been run and the baseline is clean.
-    ignoreFailures.set(true)
+    // The baseline is clean, so a style violation now fails ktlintCheck. Run
+    // `./gradlew ktlintFormat` to fix most of them automatically.
+    ignoreFailures.set(false)
     filter {
         // Generated sources are not ours to format.
         exclude { it.file.path.contains("/build/") }

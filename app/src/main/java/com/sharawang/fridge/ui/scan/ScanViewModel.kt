@@ -80,22 +80,28 @@ class ScanViewModel(
     }
 
     fun toggle(index: Int) = _uiState.update { state ->
-        state.copy(lines = state.lines.mapIndexed { i, line ->
-            if (i == index) line.copy(keep = !line.keep) else line
-        })
+        state.copy(
+            lines = state.lines.mapIndexed { i, line ->
+                if (i == index) line.copy(keep = !line.keep) else line
+            }
+        )
     }
 
     fun rename(index: Int, name: String) = _uiState.update { state ->
-        state.copy(lines = state.lines.mapIndexed { i, line ->
-            // Re-guess the area from the corrected name, unless the user already picked one.
-            if (i == index) line.copy(name = name) else line
-        })
+        state.copy(
+            lines = state.lines.mapIndexed { i, line ->
+                // Re-guess the area from the corrected name, unless the user already picked one.
+                if (i == index) line.copy(name = name) else line
+            }
+        )
     }
 
     fun setArea(index: Int, area: StorageArea) = _uiState.update { state ->
-        state.copy(lines = state.lines.mapIndexed { i, line ->
-            if (i == index) line.copy(storageArea = area) else line
-        })
+        state.copy(
+            lines = state.lines.mapIndexed { i, line ->
+                if (i == index) line.copy(storageArea = area) else line
+            }
+        )
     }
 
     fun keepAll(keep: Boolean) = _uiState.update { state ->
@@ -124,7 +130,9 @@ class ScanViewModel(
         }
     }
 
-    fun reset() { _uiState.value = ScanUiState() }
+    fun reset() {
+        _uiState.value = ScanUiState()
+    }
 
     companion object {
         fun factory(container: AppContainer) = object : ViewModelProvider.Factory {

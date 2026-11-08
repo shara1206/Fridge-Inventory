@@ -335,14 +335,20 @@ fun ItemEditScreen(viewModel: ItemEditViewModel, onDone: () -> Unit) {
         DatePickerSheet(
             initial = state.purchasedOn,
             onDismiss = { showPurchasedPicker = false },
-            onPick = { viewModel.onPurchasedOn(it); showPurchasedPicker = false }
+            onPick = {
+                viewModel.onPurchasedOn(it)
+                showPurchasedPicker = false
+            }
         )
     }
     if (showExpiryPicker) {
         DatePickerSheet(
             initial = state.expiresOn ?: LocalDate.now(),
             onDismiss = { showExpiryPicker = false },
-            onPick = { viewModel.onExpiresOn(it); showExpiryPicker = false }
+            onPick = {
+                viewModel.onExpiresOn(it)
+                showExpiryPicker = false
+            }
         )
     }
 }
@@ -353,11 +359,7 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun <T> ChipRow(
-    options: List<Pair<T, String>>,
-    selected: T,
-    onSelect: (T) -> Unit
-) {
+private fun <T> ChipRow(options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         options.chunked(3).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

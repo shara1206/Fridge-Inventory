@@ -1,0 +1,98 @@
+{
+  "format": "fridge-inventory",
+  "version": 2,
+  "exportedOn": "2026-11-01",
+  "items": [
+    {
+      "name": "Napa Cabbage",
+      "category": "VEGETABLES",
+      "storageArea": "FRIDGE",
+      "quantity": 1,
+      "unit": "ea",
+      "purchasedOn": "2026-11-01",
+      "expiresOn": "2026-11-11",
+      "store": "HMART",
+      "priceCents": 257,
+      "notes": "",
+      "finishedOn": null,
+      "finishedReason": null
+    },
+    {
+      "name": "上海青 Bok Choy",
+      "category": "VEGETABLES",
+      "storageArea": "FRIDGE",
+      "quantity": 2,
+      "unit": "ea",
+      "purchasedOn": "2026-11-01",
+      "expiresOn": null,
+      "store": "TT",
+      "priceCents": null,
+      "notes": "for hotpot",
+      "finishedOn": null,
+      "finishedReason": null
+    },
+    {
+      "name": "Frozen Dumplings",
+      "category": "FROZEN_STAPLES",
+      "storageArea": "FREEZER",
+      "quantity": 0.5,
+      "unit": "bag",
+      "purchasedOn": "2026-11-01",
+      "expiresOn": null,
+      "store": "OTHER",
+      "priceCents": null,
+      "notes": "",
+      "finishedOn": null,
+      "finishedReason": null
+    },
+    {
+      "name": "Milk",
+      "category": "DAIRY_EGGS",
+      "storageArea": "FRIDGE",
+      "quantity": 1,
+      "unit": "ea",
+      "purchasedOn": "2026-11-01",
+      "expiresOn": null,
+      "store": "OTHER",
+      "priceCents": null,
+      "notes": "",
+      "finishedOn": "2026-11-04",
+      "finishedReason": "USED"
+    }
+  ],
+  "events": [
+    {
+      "name": "Milk",
+      "category": "DAIRY_EGGS",
+      "storageArea": "FRIDGE",
+      "store": "OTHER",
+      "quantity": 1,
+      "reason": "USED",
+      "occurredOn": "2026-11-04",
+      "recordedAt": 1700000000000,
+      "valueCents": 349
+    },
+    {
+      "name": "Kale",
+      "category": "VEGETABLES",
+      "storageArea": "FRIDGE",
+      "store": "WHOLE_FOODS",
+      "quantity": 0.5,
+      "reason": "DISCARDED",
+      "occurredOn": "2026-11-05",
+      "recordedAt": 1700000100000,
+      "valueCents": 150
+    },
+    {
+      "name": "Legacy",
+      "category": "OTHER",
+      "storageArea": "FRIDGE",
+      "store": "OTHER",
+      "quantity": 1,
+      "reason": null,
+      "occurredOn": "2026-10-02",
+      "recordedAt": 0,
+      "valueCents": null
+    }
+  ]
+}

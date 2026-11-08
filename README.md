@@ -57,6 +57,14 @@ is on the roadmap but deliberately not the current focus.
 - Raw OCR text kept on every receipt so a bad parse can be replayed against an improved parser
 - Morandi palette: a clean beige base with blue-led accents, no dynamic colour
 
+## iPhone
+
+There is a web version in [`web/`](web/README.md): open it in Safari and Add to Home Screen.
+It has the same list, history and backup format as this app and works offline; it has no
+daily reminders, and receipts are pasted in via iOS Live Text. It is built, tested and
+published on its own (`.github/workflows/web.yml`, `pages.yml`), separately from the
+Android app.
+
 ## Getting started
 
 ```bash

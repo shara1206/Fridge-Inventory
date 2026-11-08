@@ -74,6 +74,17 @@ const en = {
   privacy: 'Nothing leaves this phone. The app works offline and sends no data anywhere.',
   storage_error: 'This browser will not let the app save data (private browsing?). ' +
     'Changes will be lost when the page closes.',
+  labels: 'Zone labels',
+  labels_desc: 'One card per zone, ten to an A4 page. Print it (or save it as a PDF from ' +
+    'the print screen), cut the cards apart and tape them inside the door.',
+  labels_count: '{0} items · {1} pages',
+  labels_empty_card: 'Empty. Print it and write it in.',
+  labels_extra: 'Extra cards',
+  labels_print: 'Print / Save as PDF',
+  zone_dairy_eggs: 'Dairy · Eggs', zone_vegetables: 'Vegetables', zone_fruit: 'Fruit',
+  zone_tofu_soy: 'Tofu & soy', zone_prepared: 'Ready · Prepared', zone_meat: 'Fresh meat',
+  zone_seafood: 'Seafood · Fish', zone_snacks: 'Ice cream · Dessert',
+  zone_frozen_staples: 'Frozen staples',
 };
 
 const zh = {
@@ -144,6 +155,15 @@ const zh = {
   storage_best_effort: '把这个页面"添加到主屏幕"，iOS 才会长期保留数据。',
   privacy: '数据不会离开这台手机。App 离线可用，不向任何地方发送数据。',
   storage_error: '这个浏览器不允许保存数据（无痕模式？）。关掉页面后改动会丢失。',
+  labels: '分区标签',
+  labels_desc: '每个分区一张卡，A4 一页十张。打印出来（或在打印界面存为 PDF），剪开贴在冰箱门里。',
+  labels_count: '{0} 条 · {1} 页',
+  labels_empty_card: '这格是空的，打印出来手写。',
+  labels_extra: '额外卡片',
+  labels_print: '打印 / 存为 PDF',
+  zone_dairy_eggs: '乳制品 · 蛋', zone_vegetables: '蔬菜', zone_fruit: '水果',
+  zone_tofu_soy: '豆制品', zone_prepared: '即食 · 加工', zone_meat: '生鲜肉类',
+  zone_seafood: '海鲜 · 水产', zone_snacks: '冰淇淋 · 甜点', zone_frozen_staples: '速冻主食',
 };
 
 let current = en;

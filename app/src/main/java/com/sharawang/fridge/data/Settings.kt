@@ -6,7 +6,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -34,6 +36,18 @@ class SettingsRepository(private val context: Context) {
         )
     }
 
+    /**
+     * The day of the last backup the user exported, or null if they never have. Uninstalling
+     * the app deletes everything in it, so the inventory nudges when this gets old.
+     */
+    val lastBackupOn: Flow<LocalDate?> = context.dataStore.data.map { prefs ->
+        prefs[KEY_LAST_BACKUP]?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+    }
+
+    suspend fun markBackedUp(on: LocalDate = LocalDate.now()) {
+        context.dataStore.edit { it[KEY_LAST_BACKUP] = on.toString() }
+    }
+
     suspend fun setEnabled(value: Boolean) {
         context.dataStore.edit { it[KEY_ENABLED] = value }
     }
@@ -50,5 +64,6 @@ class SettingsRepository(private val context: Context) {
         val KEY_ENABLED = booleanPreferencesKey("reminders_enabled")
         val KEY_LEAD_DAYS = intPreferencesKey("reminder_lead_days")
         val KEY_HOUR = intPreferencesKey("reminder_hour")
+        val KEY_LAST_BACKUP = stringPreferencesKey("last_backup_on")
     }
 }

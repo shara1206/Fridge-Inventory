@@ -414,4 +414,17 @@ class InventoryRepositoryTest {
         assertEquals(listOf("Spinach"), repository.allItems().map { it.name })
         assertEquals(listOf("Milk"), repository.allEvents().map { it.name })
     }
+
+    @Test
+    fun `every scanned receipt keeps its OCR text, newest scan first`() = runTest {
+        val first = ParsedReceipt(Store.HMART, today, null, emptyList(), rawText = "HMART TEXT")
+        val second = ParsedReceipt(Store.OTHER, null, null, emptyList(), rawText = "COSTCO TEXT")
+        repository.commitReceipt(first, emptyList())
+        repository.commitReceipt(second, emptyList())
+
+        assertEquals(
+            listOf("COSTCO TEXT", "HMART TEXT"),
+            repository.allPurchases().map { it.rawText }
+        )
+    }
 }

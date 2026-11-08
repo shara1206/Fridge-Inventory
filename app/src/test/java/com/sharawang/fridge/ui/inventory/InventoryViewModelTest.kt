@@ -10,6 +10,7 @@ import com.sharawang.fridge.ui.TestDatabase
 import com.sharawang.fridge.ui.await
 import java.time.LocalDate
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -185,5 +186,36 @@ class InventoryViewModelTest {
 
         assertEquals(1, state.expiringSoon)
         assertEquals(1, state.expired)
+    }
+
+    // ---- backup reminder ----------------------------------------------------
+
+    @Test
+    fun `an empty kitchen is not nagged about backups`() {
+        assertEquals(null, InventoryViewModel.backupReminder(false, null, today))
+    }
+
+    @Test
+    fun `a kitchen that was never backed up is nagged`() {
+        assertEquals(BackupReminder(null), InventoryViewModel.backupReminder(true, null, today))
+    }
+
+    @Test
+    fun `a backup in the last two weeks keeps the banner away, an older one brings it back`() {
+        val recent = today.minusDays(BACKUP_REMIND_DAYS - 1)
+        val stale = today.minusDays(BACKUP_REMIND_DAYS)
+        assertEquals(null, InventoryViewModel.backupReminder(true, recent, today))
+        assertEquals(BackupReminder(stale), InventoryViewModel.backupReminder(true, stale, today))
+    }
+
+    @Test
+    fun `the banner follows the stored backup date`() {
+        add(FoodItem(name = "Milk"))
+        val month = today.minusDays(30)
+        val staleBackup = InventoryViewModel(repository, flowOf(month))
+        val neverBackedUp = InventoryViewModel(repository, flowOf(null))
+
+        assertEquals(BackupReminder(month), staleBackup.backupReminder.await { it != null })
+        assertEquals(BackupReminder(null), neverBackedUp.backupReminder.await { it != null })
     }
 }

@@ -6,6 +6,7 @@ import com.sharawang.fridge.data.local.ConsumptionEvent
 import com.sharawang.fridge.data.local.FoodItem
 import com.sharawang.fridge.data.local.isFinished
 import com.sharawang.fridge.data.repo.InventoryRepository
+import com.sharawang.fridge.receipt.ReceiptTextExport
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,6 +43,23 @@ class BackupRepository(
             stream.write(text.toByteArray())
         } ?: throw BackupFormatException("Could not open that file for writing")
         items.size
+    }
+
+    fun suggestedReceiptTextFileName(today: LocalDate = LocalDate.now()): String =
+        "fridge-receipts-ocr-$today.txt"
+
+    /**
+     * Writes the raw OCR text of every scanned receipt to a text file, for reporting bad
+     * parses. Not a backup: receipts are not read back in.
+     *
+     * @return how many receipts were written.
+     */
+    suspend fun exportReceiptText(uri: Uri): Int = withContext(Dispatchers.IO) {
+        val purchases = repository.allPurchases()
+        context.contentResolver.openOutputStream(uri, "wt")?.use { stream ->
+            stream.write(ReceiptTextExport.format(purchases).toByteArray())
+        } ?: throw BackupFormatException("Could not open that file for writing")
+        purchases.size
     }
 
     /** @return how many rows were read out of the file. */

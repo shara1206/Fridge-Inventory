@@ -12,6 +12,12 @@ Open the repo in Android Studio (Ladybug or newer) and let it sync. Requires JDK
 
 The Gradle wrapper is committed; CI runs the same `./gradlew`.
 
+## Two apps
+
+The app exists twice: Android in `app/` and the iPhone web app in `web/`. A feature change
+lands in both in the same pull request, or `FEATURES.md` records why one side does not have
+it. See `web/README.md` for running the web app and its tests.
+
 ## Two rules that are not negotiable
 
 **No network.** The app declares no `INTERNET` permission, and that is a feature, not an

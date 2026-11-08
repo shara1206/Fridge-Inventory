@@ -24,10 +24,44 @@ SDK with `platforms;android-35` and `build-tools;35.0.0` (AGP 8.5.2 also wants
 - The Gradle wrapper is committed and pinned to 8.9
   (`gradle/wrapper/gradle-wrapper.properties`). CI (`.github/workflows/ci.yml`) runs it on
   JDK 21 and fails if the SDK cannot be installed.
+- Debug builds are signed with one shared key so updates install over the old copy. It
+  comes from `keystore.properties` at the repo root (gitignored; `storeFile`,
+  `storePassword`, `keyAlias`, `keyPassword`) or, in CI, from the `FRIDGE_KEYSTORE_BASE64`
+  and `FRIDGE_KEYSTORE_PASSWORD` secrets. Without either it falls back to the default debug
+  key. Never commit the keystore or its password.
 - Dependency versions live only in `gradle/libs.versions.toml`. Add new libraries there and
   reference them as `libs.*`.
 - Network: Google Maven (`maven.google.com`) redirects to `dl.google.com`, so that host has
   to be reachable for both the SDK and the AGP/AndroidX/ML Kit dependencies.
+
+## Two apps, one feature set
+
+The app ships as Android (`app/`) and as an iPhone web app (`web/`). They are separate code
+with the same features. **Any change that adds, removes or changes a user-visible feature
+does it on both sides in the same PR** (UI strings in both apps, both languages, tests on
+both). If one side cannot or should not have it, update `FEATURES.md` with the reason
+instead. `FEATURES.md` is the parity table; keep it true after every feature change.
+
+## Web version (`web/`)
+
+A no-build PWA: plain ES modules, IndexedDB, offline service worker, published to GitHub
+Pages by `.github/workflows/pages.yml`; tests in `.github/workflows/web.yml`. See
+`web/README.md`.
+
+```bash
+cd web && node --test tests/*.test.js
+cd web && python3 -m http.server 8000
+```
+
+- `web/js/parsers.js`, `shelf-life.js`, `repo.js`, `backup.js` and `receipt-text.js` port the
+  Kotlin `receipt/parser/`, `ShelfLife`, `InventoryRepository`/`WasteReport`,
+  `InventoryBackup` and `ReceiptTextExport`. A parser fix ships on both with the fixture
+  added to both `SampleReceipts.kt` and `web/tests/sample-receipts.js`. The backup JSON
+  format is shared; `web/tests/fixtures/android-backup.json` came from the Android encoder.
+- The whole state is one IndexedDB record written in a single put per change (atomic).
+- New app files go in `sw.js` `FILES` (a test enforces it); bump `VERSION` on every change,
+  or installed copies keep serving the old files.
+- UI strings live in `web/js/i18n.js` (en + zh), mirroring the Android string resources.
 
 ## Layout (`app/src/main/java/com/sharawang/fridge/`)
 

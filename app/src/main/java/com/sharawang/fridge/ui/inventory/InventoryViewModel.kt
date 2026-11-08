@@ -12,11 +12,14 @@ import com.sharawang.fridge.data.local.Store
 import com.sharawang.fridge.data.local.daysLeft
 import com.sharawang.fridge.data.repo.InventoryRepository
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -25,6 +28,15 @@ import kotlinx.coroutines.launch
  * disagree — "2 due soon" above a list where nothing is flagged is worse than either alone.
  */
 const val DUE_SOON_DAYS = 7L
+
+/** How long after the last backup the inventory starts nudging for a new one. */
+const val BACKUP_REMIND_DAYS = 14L
+
+/**
+ * A nudge to export a backup. [lastBackupOn] is null when there has never been one.
+ * Uninstalling the app wipes its data, so a recent backup is the only way back.
+ */
+data class BackupReminder(val lastBackupOn: LocalDate?)
 
 data class InventoryUiState(
     val items: List<FoodItem> = emptyList(),
@@ -53,7 +65,10 @@ data class UndoableConsumption(
     val finished: Boolean
 )
 
-class InventoryViewModel(private val repository: InventoryRepository) : ViewModel() {
+class InventoryViewModel(
+    private val repository: InventoryRepository,
+    lastBackupOn: Flow<LocalDate?> = flowOf(null)
+) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val area = MutableStateFlow<StorageArea?>(null)
@@ -99,6 +114,12 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
                 expired = items.count { (it.daysLeft(today) ?: Long.MAX_VALUE) < 0 }
             )
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), InventoryUiState())
+
+    /** Null when no nudge is due: nothing to lose yet, or a recent backup. */
+    val backupReminder: StateFlow<BackupReminder?> =
+        combine(repository.activeItems(), lastBackupOn) { items, last ->
+            backupReminder(items.isNotEmpty(), last, LocalDate.now())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun setQuery(value: String) {
         query.value = value
@@ -156,8 +177,17 @@ class InventoryViewModel(private val repository: InventoryRepository) : ViewMode
     companion object {
         fun factory(container: AppContainer) = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                InventoryViewModel(container.repository) as T
+            override fun <T : ViewModel> create(modelClass: Class<T>): T = InventoryViewModel(
+                container.repository,
+                container.settingsRepository.lastBackupOn
+            ) as T
+        }
+
+        fun backupReminder(hasItems: Boolean, lastBackupOn: LocalDate?, today: LocalDate) = when {
+            !hasItems -> null
+            lastBackupOn != null &&
+                ChronoUnit.DAYS.between(lastBackupOn, today) < BACKUP_REMIND_DAYS -> null
+            else -> BackupReminder(lastBackupOn)
         }
     }
 }

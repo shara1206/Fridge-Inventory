@@ -43,6 +43,26 @@ jobs:
           (yes || true) | "$SDKMANAGER" --licenses > /dev/null
           "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" "build-tools;34.0.0" > /dev/null
 
+      # Signs the debug APK with the shared key, so the artifact installs over the copy already
+      # on the phone. Skipped when the secret is absent (forks, or before it is set up); the
+      # build then uses the runner's throwaway debug key.
+      - name: Restore shared debug signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.FRIDGE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.FRIDGE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No FRIDGE_KEYSTORE_BASE64 secret; using the default debug key."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/fridge-shared.keystore"
+          {
+            echo "FRIDGE_KEYSTORE_FILE=$RUNNER_TEMP/fridge-shared.keystore"
+            echo "FRIDGE_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "FRIDGE_KEY_ALIAS=fridge"
+            echo "FRIDGE_KEY_PASSWORD=$KEYSTORE_PASSWORD"
+          } >> "$GITHUB_ENV"
+
       # Includes the Robolectric database and migration tests, so the data layer is covered
       # here without an emulator. The instrumented Compose test needs a device and is not run.
       - name: Unit tests

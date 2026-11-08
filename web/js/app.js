@@ -3,8 +3,9 @@ import { encode, decode } from './backup.js';
 import { parseReceipt } from './parsers.js';
 import { guess } from './shelf-life.js';
 import { ReceiptTextExport } from './receipt-text.js';
+import { CARDS_PER_PAGE, labelLine, labelSheet } from './labels.js';
 import {
-  CATEGORIES, DUE_SOON_DAYS, STORAGE_AREAS, STORES, addDays, addMonths, daysBetween,
+  CATEGORIES, DUE_SOON_DAYS, STORAGE_AREAS, STORES, addDays, addMonths,
   daysLeft, formatMoney, formatQuantity, today,
 } from './model.js';
 import { t, setLanguage, lang } from './i18n.js';
@@ -23,6 +24,7 @@ const ui = {
   query: '',
   area: null,
   category: null,
+  store: null,
   historyFilter: 'ALL',
   scan: null, // { text, receipt, lines: [{ line, name, keep, storageArea }] }
   form: null, // the item being edited
@@ -67,6 +69,8 @@ const ICONS = {
   receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/>',
   undo: '<path d="M9 7L4 12l5 5M4 12h10a6 6 0 0 1 0 12"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  tag: '<path d="M3.5 12.5V4.5a1 1 0 0 1 1-1h8l8 8-9 9z"/><circle cx="8" cy="8" r="1.5"/>',
+  print: '<path d="M7 9V3.5h10V9M7 17H4.5V10h15v7H17M7 14h10v6.5H7z"/>',
 };
 
 const icon = (name) => `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
@@ -129,9 +133,9 @@ function expiryChip(item) {
 }
 
 function backupBanner() {
-  if (state.items.length === 0) return '';
-  const last = state.lastBackupOn;
-  if (last && daysBetween(last, today()) < 14) return '';
+  const reminder = repo.backupReminder(state);
+  if (!reminder) return '';
+  const last = reminder.lastBackupOn;
   const text = last ? t('backup_nag', formatDate(last)) : t('backup_never');
   return `<div class="banner"><span>${esc(text)}</span>
     <button type="button" class="text-btn" data-action="nav" data-value="#/settings">
@@ -145,6 +149,7 @@ function renderInventory() {
   const items = all.filter((i) =>
     (!ui.area || i.storageArea === ui.area) &&
     (!ui.category || i.category === ui.category) &&
+    (!ui.store || i.store === ui.store) &&
     (!q || i.name.toLowerCase().includes(q)));
   const expired = all.filter((i) => (daysLeft(i, now) ?? Infinity) < 0).length;
   const soon = all.filter((i) => {
@@ -155,6 +160,8 @@ function renderInventory() {
   if (expired) summary.push(t('summary_expired', expired));
   if (soon) summary.push(t('summary_due', soon));
   const presentCategories = CATEGORIES.filter((c) => all.some((i) => i.category === c));
+  // Same rule as Android: the store row only appears once there are two stores to pick from.
+  const presentStores = Object.keys(STORES).filter((s) => all.some((i) => i.store === s));
 
   const rows = items.map((i) => `
     <li class="row">
@@ -181,6 +188,7 @@ function renderInventory() {
         <h1>${esc(t('app_name'))}</h1>
         <p class="sub">${esc(summary.join(' · '))}</p>
       </div>
+      ${iconButton('tag', 'nav', t('labels'), 'data-value="#/labels"')}
       ${iconButton('history', 'nav', t('history'), 'data-value="#/history"')}
       ${iconButton('settings', 'nav', t('settings'), 'data-value="#/settings"')}
     </header>
@@ -199,6 +207,10 @@ function renderInventory() {
         ${chip(t('filter_all'), !ui.category, 'category', '')}
         ${presentCategories.map((c) => chip(t(`cat_${c}`), ui.category === c, 'category', c))
     .join('')}
+      </div>` : ''}
+      ${presentStores.length > 1 ? `<div class="chips scroll" role="group">
+        ${chip(t('filter_all'), !ui.store, 'store', '')}
+        ${presentStores.map((s) => chip(STORES[s], ui.store === s, 'store', s)).join('')}
       </div>` : ''}
       ${items.length ? `<ul class="list">${rows}</ul>`
     : `<p class="empty">${esc(all.length ? t('no_match') : t('empty'))}</p>`}
@@ -449,6 +461,60 @@ function renderHistory() {
     </main>`;
 }
 
+// ---- labels ------------------------------------------------------------------
+
+function cardHtml(zone, forPrint) {
+  if (!zone) {
+    // Padding on the last printed page: a spare ruled card, not white space.
+    return `<div class="label-card blank" style="--fill:#CFCAC2">
+      <div class="label-panel">${'<i class="rule"></i>'.repeat(4)}</div></div>`;
+  }
+  const lines = zone.items.map(labelLine);
+  const body = lines.length
+    ? `<ul class="label-lines${lines.length > 5 ? ' two' : ''}">${lines.map((l) =>
+      `<li>${esc(l)}</li>`).join('')}</ul>`
+    : (forPrint ? '<i class="rule"></i>'.repeat(4)
+      : `<p class="label-empty">${esc(t('labels_empty_card'))}</p>`);
+  return `<div class="label-card" style="--fill:${zone.fill};--chip:${zone.chip}">
+    <span class="label-chip">${esc(t(`area_${zone.storageArea}`))}</span>
+    <h3 class="label-heading">${esc(t(zone.heading))}</h3>
+    <div class="label-panel">${body}</div>
+  </div>`;
+}
+
+/** A4 pages, ten cards each, in the same positions as the Android PDF. */
+function printSheetHtml(sheet) {
+  const slots = [...sheet.zones];
+  while (slots.length % CARDS_PER_PAGE !== 0) slots.push(null);
+  const pages = [];
+  for (let i = 0; i < slots.length; i += CARDS_PER_PAGE) {
+    pages.push(`<section class="print-page">${slots.slice(i, i + CARDS_PER_PAGE)
+      .map((z) => cardHtml(z, true)).join('')}</section>`);
+  }
+  return pages.join('');
+}
+
+function renderLabels() {
+  const sheet = labelSheet(state.items);
+  document.getElementById('print-root').innerHTML = printSheetHtml(sheet);
+  return `
+    <header class="bar">
+      ${iconButton('back', 'nav', t('back'), 'data-value="#/"')}
+      <div class="bar-title"><h1>${esc(t('labels'))}</h1>
+        <p class="sub">${esc(t('labels_count', sheet.itemCount, sheet.pageCount))}</p></div>
+    </header>
+    <main class="page">
+      <p class="hint">${esc(t('labels_desc'))}</p>
+      <div class="label-grid">${sheet.printed.map((z) => cardHtml(z, false)).join('')}</div>
+      ${sheet.extra.length ? `<h2 class="section-title">${esc(t('labels_extra'))}</h2>
+        <div class="label-grid">${sheet.extra.map((z) => cardHtml(z, false)).join('')}</div>` : ''}
+    </main>
+    <nav class="actions">
+      <button type="button" class="btn primary" data-action="print">
+        ${icon('print')}${esc(t('labels_print'))}</button>
+    </nav>`;
+}
+
 // ---- settings ----------------------------------------------------------------
 
 function renderSettings() {
@@ -572,6 +638,7 @@ function route() {
   if (hash === '#/history') return renderHistory();
   if (hash === '#/settings') return renderSettings();
   if (hash === '#/scan') return renderScan();
+  if (hash === '#/labels') return renderLabels();
   return renderInventory();
 }
 
@@ -593,6 +660,7 @@ const actions = {
   nav: (v) => go(v),
   area: (v) => { ui.area = v || null; render(); },
   category: (v) => { ui.category = v || null; render(); },
+  store: (v) => { ui.store = v || null; render(); },
   open: (v) => go(`#/edit/${v}`),
   'use-one': async (v) => {
     const it = repo.item(state, Number(v));
@@ -692,6 +760,7 @@ const actions = {
     go('#/');
   },
   export: exportBackup,
+  print: () => window.print(),
   'export-receipts': async () => {
     const text = ReceiptTextExport.format([...state.purchases].reverse());
     if (await saveFile(`fridge-receipts-${today()}.txt`, text, 'text/plain')) {

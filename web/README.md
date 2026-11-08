@@ -16,8 +16,12 @@ Receipts: there is no on-device OCR in a web page, so use iOS Live Text. Open th
 photo (or point the Camera at it), touch and hold the text, Select All, Copy, then paste on
 the "Add from receipt" screen. The same parsers as Android read it.
 
+Zone labels: the tag button on the list opens them; Print, then Save as PDF or send to a
+printer. Same ten cards and A4 layout as the Android PDF.
+
 Not in the web version: daily expiry notifications (web push needs a server, and this app
-talks to none) and the printable zone labels.
+talks to none) and photographing a receipt directly (see Live Text above). `FEATURES.md` at
+the repo root tracks every difference between the two apps.
 
 ## Develop
 

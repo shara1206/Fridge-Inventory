@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,23 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktlint)
 }
+
+/*
+ * One signing key for every debug build, wherever it is built, so a new APK installs over the
+ * old one instead of failing with a signature conflict (and forcing an uninstall that wipes
+ * the kitchen). The key itself never goes in git. It is read from keystore.properties at the
+ * repo root (gitignored) or, in CI, from environment variables filled from repository
+ * secrets. With neither, the build falls back to the machine's default debug key.
+ */
+val signingProperties = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }
+        ?.inputStream()?.use { load(it) }
+}
+
+fun signingValue(key: String, env: String): String? =
+    signingProperties.getProperty(key) ?: System.getenv(env)?.takeIf { it.isNotBlank() }
+
+val sharedKeystore = signingValue("storeFile", "FRIDGE_KEYSTORE_FILE")
 
 android {
     namespace = "com.sharawang.fridge"
@@ -20,6 +39,17 @@ android {
         vectorDrawables { useSupportLibrary = true }
     }
 
+    signingConfigs {
+        if (sharedKeystore != null) {
+            create("shared") {
+                storeFile = rootProject.file(sharedKeystore)
+                storePassword = signingValue("storePassword", "FRIDGE_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "FRIDGE_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "FRIDGE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -31,6 +61,7 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
+            signingConfigs.findByName("shared")?.let { signingConfig = it }
         }
     }
 
@@ -43,6 +74,11 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    // Lists English and Chinese to the system, so Android 13+ offers a per-app language
+    // under Settings > Apps > Fridge > Language. The web app has its own language switch.
+    androidResources {
+        generateLocaleConfig = true
     }
     packaging {
         resources {

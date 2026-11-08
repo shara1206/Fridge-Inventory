@@ -208,3 +208,13 @@ test('shelf life: longest keyword wins and frozen moves to the freezer', () => {
   assert.equal(guess('Kimchi').storageArea, 'FRIDGE');
   assert.equal(guess('mystery').category, 'OTHER');
 });
+
+test('backup reminder: same rule as Android', () => {
+  assert.equal(repo.backupReminder(repo.emptyState(), T), null, 'nothing to lose yet');
+  const { state } = kitchen('Milk');
+  assert.deepEqual(repo.backupReminder(state, T), { lastBackupOn: null });
+  state.lastBackupOn = '2026-07-17'; // 13 days before T
+  assert.equal(repo.backupReminder(state, T), null);
+  state.lastBackupOn = '2026-07-16'; // 14 days
+  assert.deepEqual(repo.backupReminder(state, T), { lastBackupOn: '2026-07-16' });
+});

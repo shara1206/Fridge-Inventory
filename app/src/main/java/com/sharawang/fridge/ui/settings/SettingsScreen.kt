@@ -69,6 +69,10 @@ fun SettingsScreen(viewModel: SettingsViewModel, onDone: () -> Unit) {
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri -> uri?.let(viewModel::export) }
 
+    val exportReceiptText = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain")
+    ) { uri -> uri?.let(viewModel::exportReceiptText) }
+
     val importFile = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri -> pendingImport = uri }
@@ -79,6 +83,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onDone: () -> Unit) {
             when (result) {
                 is BackupResult.Exported ->
                     context.getString(R.string.backup_exported, result.count)
+                is BackupResult.ReceiptsExported ->
+                    context.getString(R.string.receipts_exported, result.count)
                 is BackupResult.Imported ->
                     context.getString(R.string.backup_imported, result.count)
                 is BackupResult.Failed ->
@@ -214,6 +220,22 @@ fun SettingsScreen(viewModel: SettingsViewModel, onDone: () -> Unit) {
                     enabled = !busy
                 ) { Text(stringResource(R.string.action_import)) }
             }
+
+            HorizontalDivider()
+
+            Text(
+                stringResource(R.string.section_receipt_text),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                stringResource(R.string.receipt_text_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            OutlinedButton(
+                onClick = { exportReceiptText.launch(viewModel.suggestedReceiptTextFileName()) },
+                enabled = !busy
+            ) { Text(stringResource(R.string.action_export_receipt_text)) }
 
             HorizontalDivider()
 
